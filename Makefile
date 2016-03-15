@@ -1117,11 +1117,14 @@ rpm: include/config/kernel.release FORCE
 # Brief documentation of the typical targets used
 # ---------------------------------------------------------------------------
 
-boards := $(wildcard $(srctree)/arch/$(SRCARCH)/configs/*_defconfig)
+boards := $(wildcard $(srctree)/arch/$(SRCARCH)/configs/rk*_defconfig)
 boards := $(notdir $(boards))
 board-dirs := $(dir $(wildcard $(srctree)/arch/$(SRCARCH)/configs/*/*_defconfig))
 board-dirs := $(sort $(notdir $(board-dirs:/=)))
 
+images := $(wildcard $(srctree)/arch/$(SRCARCH)/boot/dts/zm*.dts)
+images += $(wildcard $(srctree)/arch/$(SRCARCH)/boot/dts/tab*.dts)
+images := $(notdir $(images))
 help:
 	@echo  'Cleaning targets:'
 	@echo  '  clean		  - Remove most generated files but keep the config and'
@@ -1177,6 +1180,12 @@ help:
 		$(foreach b, $(boards), \
 		printf "  %-24s - Build for %s\\n" $(b) $(subst _defconfig,,$(b));) \
 		echo '')
+	@echo "Build kernel.img and resource.img use follow command"
+	@$(if $(images), \
+		$(foreach b, $(images), \
+		printf "  %-24s - make %s.img \\n" $(b) $(subst .dts,,$(b));) \
+		echo '')
+NOT_USED:
 	@$(if $(board-dirs), \
 		$(foreach b, $(board-dirs), \
 		printf "  %-16s - Show %s-specific targets\\n" help-$(b) $(b);) \

@@ -1,0 +1,37 @@
+menuconfig AXP_PMU
+	bool "AXP Power drivers"
+	depends on REGULATOR
+	default y
+	---help---
+	  This option allows you to select AXP power driver
+
+if AXP_PMU
+
+choice
+	prompt "AXP PMU type"
+	default AXP809
+
+config AXP809
+	bool "AXP809 driver"
+	---help---
+	  AXP809 driver
+
+endchoice
+
+config AXP_DEBUG
+	bool "AXP debug interface"
+	default n
+
+config KP_OUTPUTINIT
+	bool "AXP output init"
+	default n
+
+config AXP_CHARGEINIT
+	bool "AXP initial charging environment set"
+	default y
+
+config AXP_CHGCHANGE
+	bool "AXP charging current set when suspend\resume\shutdown"
+	default y
+
+endif # !KP_AXP

@@ -1,0 +1,42 @@
+#
+# gslX680 touchscreen driver hardware configuration
+#
+
+menuconfig GSLX680_X670
+		bool "gslx680_x670"
+
+
+if	GSLX680_X670
+	
+config TOUCHSCREEN_GSL36XX
+	tristate "gsl36xx touchscreen panel support"
+	default y
+	
+choice
+	prompt "gslX36xx touchscreen driver"
+	depends on TOUCHSCREEN_GSL36XX
+	
+config  TP_3670_TAB785_FPCA79A29V02
+        bool "For tab 785 TP_3670_fpca79a29v02 TP panel"	
+	
+config  TP_3680_YTG_G10077_F1
+        bool "For TP_3680_YTG_G10077_F1 TP panel"
+		
+config	TP_3680_ZM97F_DRFPC_V10
+	bool "For TP_3680 ZM97F DRFPC V1.0"
+	
+config	TP_3680_F_WGJ
+	bool "For TP_3680 tab9689  V1.0"
+	
+config	TP_3680_TAB106
+	bool "For TP_3680 tab106  V1.0"
+	
+config	TP_3680_MGYCTP_10601
+	bool "For TP_3680 tab8010 10d"
+	
+config	TP_3680_MGYCTP_80600
+	bool "For TP_3680 tab8010 8d"
+
+endchoice
+
+endif

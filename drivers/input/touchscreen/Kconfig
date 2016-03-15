@@ -11,6 +11,9 @@ menuconfig INPUT_TOUCHSCREEN
 
 if INPUT_TOUCHSCREEN
 
+source  drivers/input/touchscreen/gslx680/Kconfig
+
+
 config TOUCHSCREEN_ZET62XX
 	tristate "zet62xx touchscreen driver"
 	help

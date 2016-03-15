@@ -473,7 +473,7 @@ config BATTERY_RK818
 
 config CHARGER_DISPLAY
 	bool "Support charger display"
-
+source "drivers/power/axp_power/Kconfig"
 source "drivers/power/reset/Kconfig"
 
 endif # POWER_SUPPLY

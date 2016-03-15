@@ -32,7 +32,7 @@ modules.builtin
 *.lzo
 *.patch
 *.gcno
-
+*.img
 #
 # Top-level generic files
 #
@@ -84,6 +84,7 @@ GTAGS
 *~
 \#*#
 
+drivers/gpu/arm/mali400/mali/__malidrv_build_info.c
 #
 # Leavings from module signing
 #
