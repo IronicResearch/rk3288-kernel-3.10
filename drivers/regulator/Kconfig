@@ -292,6 +292,13 @@ config REGULATOR_SYR82X
 	help
 	  Support the voltage and current regulators of the SYR82X series of DCDC devices.
 
+config REGULATOR_TCS4526
+	tristate "TCS4526 DCDC SUPPORT REGULATOR"
+	depends on I2C
+	help
+	  Support the voltage and current regulators of the TCS4526 series of DCDC devices.	
+
+
 config REGULATOR_XZ3216
 	tristate "XZ3216 DCDC SUPPORT REGULATOR"
 	depends on I2C
