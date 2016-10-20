@@ -2168,6 +2168,7 @@ static struct of_device_id sensor_dt_ids[] = {
 	
 	/*light sensor*/
 	{ .compatible = "light_cm3217" },
+	{ .compatible = "light_cm3218" },
 	{ .compatible = "light_cm3232" },
 	{ .compatible = "light_al3006" },
 	{ .compatible = "ls_stk3171" },

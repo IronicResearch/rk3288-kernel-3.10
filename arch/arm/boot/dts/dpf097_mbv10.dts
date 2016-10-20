@@ -1,7 +1,7 @@
 /dts-v1/;
 
 #include "rk3288.dtsi"
-#include "lcd-LQ079L1SX01-2048x1536.dtsi"
+#include "lcd-tv097x0m-768x1024.dtsi"
 
 / {
 	fiq-debugger {
@@ -58,7 +58,7 @@
 
 	backlight {
 		compatible = "pwm-backlight";
-		pwms = <&pwm0 0 25000>;
+		pwms = <&pwm0 0 30000>;
 		brightness-levels = <255 254 253 252 251 250 249 248 247 246 245 244 243 242 241 240
 		     239 238 237 236 235 234 233 232 231 230 229 228 227 226 225 224 223 222 221 220
 		     219 218 217 216 215 214 213 212 211 210 209 208 207 206 205 204 203 202 201 200
@@ -100,6 +100,11 @@
 		};
 	};
 
+
+
+
+
+/*
 	codec_hdmi_i2s: codec-hdmi-i2s {
 		compatible = "hdmi-i2s";
 	};
@@ -175,7 +180,30 @@
 			};
 		};
 	};
+*/
 
+	rockchip-es8396 {
+		compatible = "rockchip-es8396";
+		dais {
+			dai0 {
+				audio-codec = <&es8396>;
+				audio-controller = <&i2s>;
+				format = "i2s";
+			};
+		};
+	};
+
+
+	vb-switch {
+		status = "okay";
+		compatible = "rockchip,vbswitch";
+		chan_a = <&gpio5 GPIO_B7 GPIO_ACTIVE_LOW >;
+		chan_b = <&gpio5 GPIO_C0 GPIO_ACTIVE_LOW >;
+		chan_k = <&gpio5 GPIO_C2 GPIO_ACTIVE_LOW >;
+		scrl_a = <&gpio5 GPIO_B4 GPIO_ACTIVE_LOW >;
+		scrl_b = <&gpio5 GPIO_B5 GPIO_ACTIVE_LOW >;
+		scrl_k = <&gpio5 GPIO_C3 GPIO_ACTIVE_LOW >;
+	};
 
 	usb_control {
 		compatible = "rockchip,rk3288-usb-control";
@@ -229,10 +257,12 @@
 				rockchip,pins = <GPIO7_A7>;
 				rockchip,pull = <VALUE_PULL_UP>;
 			};
+			/*
 			gpio8_a3: gpio8-a3 {
 				rockchip,pins = <GPIO8_A3>;
 				rockchip,pull = <VALUE_PULL_DOWN>;
 			};
+			*/
 		};
 	//could add other pinctrl definition such as gpio
 
@@ -439,59 +469,31 @@
 
 &i2c1 {
 	status = "okay";
-	mpu6050:mpu@68{
-		compatible = "mpu6050";
-		reg = <0x68>;
-		mpu-int_config = <0x10>;
-		mpu-level_shifter = <0>;
-		mpu-orientation = <0 1 0 1 0 0 0 0 1>;	
-		orientation-x= <0>;
-		orientation-y= <1>;
-		orientation-z= <1>;
-		irq-gpio = <&gpio8 GPIO_A0 IRQ_TYPE_LEVEL_LOW>;			
-		mpu-debug = <0>;
-	};
-
-	ak8963:compass@0d{
-		compatible = "mpu_ak8963";
-		reg = <0x0d>;
-		compass-bus = <0>;
-		compass-adapt_num = <0>;
-		compass-orientation = <1 0 0 0 1 0 0 0 1>;
-		orientation-x= <0>;
-		orientation-y= <0>;
-		orientation-z= <1>;	
-		compass-debug = <1>;
-		status = "okay";
-	};	
+	sensor@48 {
+              compatible = "light_cm3218";
+              reg = <0x48>;
+              type = <SENSOR_TYPE_LIGHT>;
+              irq-gpio = <&gpio8 GPIO_A3 IRQ_TYPE_EDGE_FALLING>;              
+              irq_enable = <1>;
+              poll_delay_ms = <30>;
+              layout = <1>;
+       };
 
 };
 
 &i2c2 {
 	status = "okay";
-	rt5631: rt5631@1a {
-		compatible = "rt5631";
-		reg = <0x1a>;
-	};
 	es8323: es8323@10 {
 		compatible = "es8323";
 		reg = <0x10>;
 	};
-	rt3261: rt3261@1c {
-		compatible = "rt3261";
-		reg = <0x1c>;
-	//	codec-en-gpio = <0>;//sdk default high level
-		spk-num= <2>;
-		modem-input-mode = <1>;
-		lout-to-modem_mode = <1>;
-		spk-amplify = <2>;
-		playback-if1-data_control = <0>;
-		playback-if2-data_control = <0>;
+	es8396: es8396@10 {
+		compatible = "es8396";
+		reg = <0x10>;
+	//	spk-con-gpio = <&gpio2 GPIO_C7 GPIO_ACTIVE_HIGH>;
+		status = "okay";
 	};
-	rt5616: rt5616@1b {
-		compatible = "rt5616";
-		reg = <0x1b>;
-	};
+
 };
 
 &i2c3 {
@@ -516,7 +518,7 @@
 		irq_gpio_number = <&gpio7 GPIO_A6 IRQ_TYPE_LEVEL_LOW>;
 		rst_gpio_number = <&gpio7 GPIO_A5 GPIO_ACTIVE_HIGH>;
 	};
-*/
+
 	 GSLX680: GSLX680@40 {
 		compatible =  "GSL,GSLX680";
 		reg = <0x40>;
@@ -526,7 +528,14 @@
 		//max-x = <1280>;
 		//max-y = <800>;
 		status = "okay";
+	};*/
+	
+	it7236@8c{
+		compatible =  "ite,7236";
+		reg = <0x8c>;
+		irq-gpio = <&gpio7 GPIO_B1 IRQ_TYPE_LEVEL_LOW>;
 	};
+	
 };
 
 &i2c5 {
@@ -555,24 +564,19 @@
 			rockchip,regulator_voltage = <1800000>;
 			rockchip,delay = <5>;
 		};
-
+		 */
 		lcd_en:lcd_en {
 			rockchip,power_type = <GPIO>;
 			gpios = <&gpio7 GPIO_A3 GPIO_ACTIVE_HIGH>;
 			rockchip,delay = <10>;
 		};
 		
-		lcd_cs:lcd_cs {
-			rockchip,power_type = <GPIO>;
-			gpios = <&gpio7 GPIO_A4 GPIO_ACTIVE_HIGH>;
-			rockchip,delay = <10>;
-		};
 
 		lcd_rst:lcd_rst {
 			rockchip,power_type = <GPIO>;
-			gpios = <&gpio3 GPIO_D6 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpio7 GPIO_A4 GPIO_ACTIVE_HIGH>;
 			rockchip,delay = <5>;
-		};*/
+		};
 
 	};
 };
@@ -589,34 +593,20 @@
 
 &adc {
 	status = "okay";
-
+/*
 	rockchip_headset {
 		compatible = "rockchip_headset";
-		headset_gpio = <&gpio8 GPIO_A3 GPIO_ACTIVE_LOW>;
+		headset_gpio = <>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&gpio8_a3>;
 		io-channels = <&adc 2>; 
-       /*
-               hook_gpio = ;
-               hook_down_type = ; //interrupt hook key down status 
-		*/       
+       
+		
        };
-
+  */     
 	key {
 		compatible = "rockchip,key";
 		io-channels = <&adc 1>;
 
-		vol-up-key {
-			linux,code = <115>;
-			label = "volume up";
-			rockchip,adc_value = <1>;
-		};
-
-		vol-down-key {
-			linux,code = <114>;
-			label = "volume down";
-			rockchip,adc_value = <170>;
-		};
 		
 		power-key {
 			gpios = <&gpio0 GPIO_A5 GPIO_ACTIVE_LOW>;
@@ -624,6 +614,32 @@
 			label = "power";
 			gpio-key,wakeup;
 		};
+
+               vol-up-key {
+                       linux,code = <115>;
+                       label = "volume up";
+                       rockchip,adc_value = <1>;
+               };
+
+               vol-down-key {
+                       linux,code = <114>;
+                       label = "volume down";
+                       rockchip,adc_value = <170>;
+               };
+
+/*
+		enter-key {
+			gpios = <&gpio5 GPIO_C3 GPIO_ACTIVE_LOW>;
+			linux,code = <28>;
+			label = "enter";
+		};
+
+		back-key {
+			gpios = <&gpio5 GPIO_C2 GPIO_ACTIVE_LOW>;
+			linux,code = <158>;
+			label = "back";
+		};
+*/
 
 	};
 };
@@ -681,7 +697,7 @@
 		200000 900000
 		300000 950000
 		420000 1050000
-		500000 1150000
+	//	500000 1100000
 		>;
 	status="okay";
 };
@@ -773,8 +789,8 @@
 
 		rk818_dcdc4_reg: regulator@3 {
 			regulator-name= "vccio";
-			regulator-min-microvolt = <1800000>;
-			regulator-max-microvolt = <3300000>;
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3000000>;
 			regulator-initial-mode = <0x2>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
@@ -802,7 +818,7 @@
 			regulator-max-microvolt = <1800000>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
-				regulator-state-disabled;
+				regulator-state-enabled;
 				regulator-state-uv = <1800000>;
 			};
 		};

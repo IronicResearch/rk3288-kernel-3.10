@@ -1124,6 +1124,7 @@ board-dirs := $(sort $(notdir $(board-dirs:/=)))
 
 images := $(wildcard $(srctree)/arch/$(SRCARCH)/boot/dts/zm*.dts)
 images += $(wildcard $(srctree)/arch/$(SRCARCH)/boot/dts/tab*.dts)
+images += $(wildcard $(srctree)/arch/$(SRCARCH)/boot/dts/dpf*.dts)
 images := $(notdir $(images))
 help:
 	@echo  'Cleaning targets:'

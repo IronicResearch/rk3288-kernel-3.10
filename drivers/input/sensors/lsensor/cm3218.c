@@ -127,6 +127,7 @@ static int sensor_active(struct i2c_client *client, int enable, int rate)
 	int result = 0;
 	int status = 0;
 	
+	printk("cm3218 %s\n\n\n",__func__);
 	sensor->client->addr = sensor->ops->ctrl_reg;	
 	sensor->ops->ctrl_data = cm3218_read(client,sensor->client->addr);
 	
@@ -154,6 +155,7 @@ static int sensor_active(struct i2c_client *client, int enable, int rate)
 
 static int sensor_init(struct i2c_client *client)
 {	
+	printk("cm3218 %s\n\n\n",__func__);
 	int status, i;
 	struct sensor_private_data *sensor =
 	    (struct sensor_private_data *) i2c_get_clientdata(client);
