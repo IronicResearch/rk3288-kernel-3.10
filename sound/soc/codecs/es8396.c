@@ -323,10 +323,10 @@ static void init_cali_work_events(struct work_struct *work)
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 
 	mutex_lock(&es8396->init_cali_mlock);
-	pr_debug("pcm_pop_work_events\n");
+	printk("pcm_pop_work_events\n");
 
 	if (es8396->calibrate == 0) {
-		pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+		printk("Enter into %s  %d\n", __func__, __LINE__);
 		snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x86);
 		snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x06);
 		msleep(100);
@@ -345,10 +345,10 @@ static void pcm_pop_work_events(struct work_struct *work)
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 
 	mutex_lock(&es8396->pcm_depop_mlock);
-	pr_debug("pcm_pop_work_events\n");
+	printk("pcm_pop_work_events\n");
 
 	if (es8396->calibrate == 0) {
-		pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+		printk("Enter into %s  %d\n", __func__, __LINE__);
 		snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x86);
 		snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x06);
 		usleep_range(20000, 21000);
@@ -393,7 +393,7 @@ static int classd_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:	/* prepare power up */
 		/* power up class d */
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
 			 __func__, __LINE__);
 		/* read the clock configure */
 		regv1 = snd_soc_read(w->codec, ES8396_CLK_CTRL_REG08);
@@ -459,14 +459,14 @@ static int classd_event(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMU:	/*after power up */
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
 			 __func__, __LINE__);
 		es8396->output_device_selected = 0;
 		schedule_delayed_work(&es8396->pcm_pop_work,
 				      msecs_to_jiffies(50));
 		break;
 	case SND_SOC_DAPM_PRE_PMD:	/*prepare power down */
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
 			 __func__, __LINE__);
 		/* read the clock configure */
 		regv1 = snd_soc_read(w->codec, ES8396_CLK_CTRL_REG08);
@@ -492,7 +492,7 @@ static int classd_event(struct snd_soc_dapm_widget *w,
 				    0x20);
 		break;
 	case SND_SOC_DAPM_POST_PMD:	/* after power down */
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMD\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMD\n",
 			 __func__, __LINE__);
 		break;
 	default:
@@ -509,6 +509,8 @@ static int micbias_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+			 __func__, __LINE__);
 		if (es8396_valid_micbias(es8396->mic_bias_lvl) == false) {
 			pr_err("MIC BIAS Level error.\n");
 			return -EINVAL;
@@ -527,7 +529,8 @@ static int micbias_event(struct snd_soc_dapm_widget *w,
 		} else {
 			regv &= 0xf0;	/* disable DMIC CLK */
 		}
-		snd_soc_write(w->codec, ES8396_ALRCK_GPIO_SEL_REG15, regv);
+			snd_soc_write(w->codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xf0);
+			snd_soc_write(w->codec, ES8396_ALRCK_GPIO_SEL_REG15, regv);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		regv = snd_soc_read(w->codec, ES8396_ALRCK_GPIO_SEL_REG15);
@@ -545,7 +548,7 @@ static void adc_depop_work_events(struct work_struct *work)
 {
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 
-	pr_debug("adc_depop_work_events\n");
+	printk("adc_depop_work_events\n");
 	mutex_lock(&es8396->adc_depop_mlock);
 	snd_soc_update_bits(tron_codec, ES8396_SDP1_OUT_FMT_REG20, 0x40, 0x00);
 	mutex_unlock(&es8396->adc_depop_mlock);
@@ -557,10 +560,10 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 	unsigned int regv;
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 
-	pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		pr_debug("Enter into SND_SOC_DAPM_PRE_PMU %s  %d\n", __func__,
+		printk("Enter into SND_SOC_DAPM_PRE_PMU %s  %d\n", __func__,
 			 __LINE__);
 		snd_soc_update_bits(w->codec, ES8396_SDP1_OUT_FMT_REG20, 0x40,
 				    0x40);
@@ -570,7 +573,8 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
-		snd_soc_write(w->codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
+		snd_soc_write(w->codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x00);
+		
 		/* Enable MIC BOOST */
 		/* snd_soc_update_bits(w->codec, ES8396_SYS_MIC_IBIAS_EN_REG75,
 				       0x01, 0x00); */
@@ -609,7 +613,7 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 				      msecs_to_jiffies(150));
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		pr_debug("Enter into SND_SOC_DAPM_PRE_PMD %s  %d\n", __func__,
+		printk("Enter into SND_SOC_DAPM_PRE_PMD %s  %d\n", __func__,
 			 __LINE__);
 		snd_soc_update_bits(w->codec, ES8396_SDP1_OUT_FMT_REG20, 0x40,
 				    0x40);
@@ -632,10 +636,10 @@ static int hpamp_event(struct snd_soc_dapm_widget *w,
 	unsigned int regv;
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 
-	pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
 			 __func__, __LINE__);
 		/* power up headphone driver */
 		/* read the clock configure */
@@ -667,7 +671,7 @@ static int hpamp_event(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
 			 __func__, __LINE__);
 		es8396->output_device_selected = 1;
 		schedule_delayed_work(&es8396->pcm_pop_work,
@@ -675,7 +679,7 @@ static int hpamp_event(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
 			 __func__, __LINE__);
 		snd_soc_write(w->codec, ES8396_CPHP_ENABLE_REG40, 0x08);
 
@@ -690,7 +694,7 @@ static int hpamp_event(struct snd_soc_dapm_widget *w,
 		snd_soc_update_bits(w->codec, ES8396_DAC_CSM_REG66, 0x42, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMD\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMD\n",
 			 __func__, __LINE__);
 		/* dac analog power down */
 		snd_soc_update_bits(w->codec, ES8396_DAC_CSM_REG66, 0x40, 0x40);
@@ -720,10 +724,10 @@ static int hpamp_event(struct snd_soc_dapm_widget *w,
 static int music_rec_event(struct snd_soc_dapm_widget *w,
 			   struct snd_kcontrol *kcontrol, int event)
 {
-	pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
 			 __func__, __LINE__);
 		snd_soc_write(w->codec, 0x1A, 0x00);	/* Enable HPOUT */
 		snd_soc_write(w->codec, 0x8, 0x00);
@@ -733,12 +737,12 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, 0x67, 0x00);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
 			 __func__, __LINE__);
-		snd_soc_write(w->codec, 0x20, 0x40);	/* MUTE SDP1 OUT */
+		//snd_soc_write(w->codec, 0x20, 0x40);	/* MUTE SDP1 OUT */
 		break;
 	default:
-		pr_debug("Enter into %s  %d, event = others\n", __func__,
+		printk("Enter into %s  %d, event = others\n", __func__,
 			 __LINE__);
 		break;
 	}
@@ -751,10 +755,10 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 static int music_play_event(struct snd_soc_dapm_widget *w,
 			    struct snd_kcontrol *kcontrol, int event)
 {
-	pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
 			 __func__, __LINE__);
 		snd_soc_write(w->codec, 0x1A, 0x00);	/* Enable HPOUT */
 		snd_soc_write(w->codec, 0x8, 0x00);
@@ -764,7 +768,7 @@ static int music_play_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, 0x67, 0x00);
 		break;
 	default:
-		pr_debug("Enter into %s  %d, event = others\n", __func__,
+		printk("Enter into %s  %d, event = others\n", __func__,
 			 __LINE__);
 		break;
 	}
@@ -779,10 +783,10 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 {
 	unsigned int index;
 
-	pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
 			 __func__, __LINE__);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPIN */
 		snd_soc_update_bits(w->codec, ES8396_SDP2_IN_FMT_REG22,
@@ -811,7 +815,7 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 			      es8396_equalizer_lpf_bt_incall[59]);
 		break;
 	default:
-		pr_debug("Enter into %s  %d, event = others\n", __func__,
+		printk("Enter into %s  %d, event = others\n", __func__,
 			 __LINE__);
 		break;
 	}
@@ -826,10 +830,10 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 {
 	unsigned int index;
 
-	pr_debug("Enter into %s  %d\n", __func__, __LINE__);
+	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
 			 __func__, __LINE__);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPIN */
 		snd_soc_update_bits(w->codec, ES8396_SDP2_IN_FMT_REG22,
@@ -858,14 +862,14 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 			      es8396_equalizer_lpf_bt_incall[59]);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		pr_debug("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
 			 __func__, __LINE__);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPO */
 		snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23,
 				    0x40, 0x40);
 		break;
 	default:
-		pr_debug("Enter into %s  %d, event = others\n", __func__,
+		printk("Enter into %s  %d, event = others\n", __func__,
 			 __LINE__);
 		break;
 	}
@@ -1498,6 +1502,8 @@ static const struct snd_soc_dapm_widget es8396_dapm_widgets[] = {
 	/*
 	 * AIF OUT AND MUX
 	 */
+	 SND_SOC_DAPM_VALUE_MUX("DMIC Mux", SND_SOC_NOPM, 0, 0,
+			       &es8396_dmic_mux_controls),
 	SND_SOC_DAPM_AIF_OUT_E("VOICESDPOL", "SDP1 Capture", 0, SND_SOC_NOPM, 6,
 			       1,
 			       music_rec_event,
@@ -2171,7 +2177,7 @@ static int es8396_set_pll(struct snd_soc_dai *dai, int pll_id,
 		reg = snd_soc_read(codec, ES8396_CLK_CTRL_REG08);
 		reg |= 0x0F;
 		snd_soc_write(codec, ES8396_CLK_CTRL_REG08, reg);
-		pr_debug("ES8396 PLL No Clock source\n");
+		printk("ES8396 PLL No Clock source\n");
 		break;
 	case ES8396_PLL_SRC_FRM_MCLK:
 		reg = snd_soc_read(codec, ES8396_CLK_SRC_SEL_REG01);
@@ -2182,7 +2188,7 @@ static int es8396_set_pll(struct snd_soc_dai *dai, int pll_id,
 		reg = snd_soc_read(codec, ES8396_CLK_CTRL_REG08);
 		reg |= 0x0F;
 		snd_soc_write(codec, ES8396_CLK_CTRL_REG08, reg);
-		pr_debug("ES8396 PLL Clock Source from MCLK pin\n");
+		printk("ES8396 PLL Clock Source from MCLK pin\n");
 		break;
 	case ES8396_PLL_SRC_FRM_BCLK:
 		reg = snd_soc_read(codec, ES8396_CLK_SRC_SEL_REG01);
@@ -2193,7 +2199,7 @@ static int es8396_set_pll(struct snd_soc_dai *dai, int pll_id,
 		reg = snd_soc_read(codec, ES8396_CLK_CTRL_REG08);
 		reg |= 0x0F;
 		snd_soc_write(codec, ES8396_CLK_CTRL_REG08, reg);
-		pr_debug("ES8396 PLL Clock Source from BCLK signal\n");
+		printk("ES8396 PLL Clock Source from BCLK signal\n");
 		break;
 	default:
 		return -EINVAL;
@@ -2218,9 +2224,9 @@ static int es8396_set_pll(struct snd_soc_dai *dai, int pll_id,
 		}
 
 		if (tmp == 1) {
-			pr_debug("MCLK DIV=%d PLL DIV=%d PLL CLOCK SOURCE=%dHz\n",
+			printk("MCLK DIV=%d PLL DIV=%d PLL CLOCK SOURCE=%dHz\n",
 				 mclk_div, pll_div, freq_in);
-			pr_debug("N=%d, K3=%d, K2=%d, K1=%d\n", N, K3, K2, K1);
+			printk("N=%d, K3=%d, K2=%d, K1=%d\n", N, K3, K2, K1);
 
 			/*set N & K */
 			snd_soc_write(codec, ES8396_PLL_N_REG04, N);
@@ -2281,7 +2287,7 @@ static int es8396_set_pll(struct snd_soc_dai *dai, int pll_id,
 			snd_soc_write(codec, ES8396_PLL_K1_REG06, 0XC3);
 			snd_soc_write(codec, ES8396_PLL_K0_REG07, 0XB8);
 		} else {
-			pr_debug("Can not find the correct clock frequency!!!!!\n");
+			printk("Can not find the correct clock frequency!!!!!\n");
 		}
 	}
 	return 0;
@@ -2348,7 +2354,7 @@ static int es8396_set_dai_sysclk(struct snd_soc_dai *dai,
 		default:
 			break;
 		}
-		pr_debug("ES8396 using MCLK as SYSCLK at %uHz\n", freq);
+		printk("ES8396 using MCLK as SYSCLK at %uHz\n", freq);
 		break;
 	/* the clock source form internal BCLK signal, don't use PLL */
 	case ES8396_CLKID_BCLK:
@@ -2389,7 +2395,7 @@ static int es8396_set_dai_sysclk(struct snd_soc_dai *dai,
 		default:
 			break;
 		}
-		pr_debug("ES8396 using BCLK as SYSCLK at %uHz\n", freq);
+		printk("ES8396 using BCLK as SYSCLK at %uHz\n", freq);
 		break;
 	case ES8396_CLKID_PLLO:
 		priv->sysclk[dai->id] = ES8396_CLKID_PLLO;
@@ -2421,7 +2427,7 @@ static int es8396_set_dai_sysclk(struct snd_soc_dai *dai,
 		default:
 			break;
 		}
-		pr_debug("ES8396 using PLL Output as SYSCLK\n");
+		printk("ES8396 using PLL Output as SYSCLK\n");
 		break;
 	default:
 		pr_err("ES8396 System clock error\n");
@@ -2585,7 +2591,7 @@ static int es8396_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		return -EINVAL;
 		break;
 	}
-	pr_debug("es8396_set_dai_fmt-->\n");
+	printk("es8396_set_dai_fmt-->\n");
 
 	priv->config[id].spc = spc;
 	priv->config[id].mmcc = mmcc;
@@ -2604,7 +2610,7 @@ static int es8396_pcm_hw_params(struct snd_pcm_substream *substream,
 	int srate = params_rate(params);
 	u8 bdiv, lrdiv;
 
-	pr_debug("DAI[%d]: MCLK= %u, srate= %u, lrckdiv= %x, bclkdiv= %x\n",
+	printk("DAI[%d]: MCLK= %u, srate= %u, lrckdiv= %x, bclkdiv= %x\n",
 		 id, priv->mclk[0], srate,
 		 es8396_mclk_coeffs[mclk_coeff].lrcdiv,
 		 es8396_mclk_coeffs[mclk_coeff].bclkdiv);
@@ -2650,9 +2656,9 @@ static int es8396_set_bias_level(struct snd_soc_codec *codec,
 	u8 value;
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(codec);
 
-	pr_debug("es8396_set_bias_level = 0x%x\n",
+	printk("es8396_set_bias_level = 0x%x\n",
 		 codec->dapm.bias_level);
-	pr_debug("bias_level = %d\n", level);
+	printk("bias_level = %d\n", level);
 
 	switch (level) {
 	case SND_SOC_BIAS_ON:
@@ -2740,8 +2746,8 @@ static int es8396_set_tristate(struct snd_soc_dai *dai, int tristate)
 	struct snd_soc_codec *codec = dai->codec;
 	int id = dai->id;
 
-	pr_debug("es8396_set_tristate\n");
-	pr_debug("ES8396 SDP NUM = %d\n", id);
+	printk("es8396_set_tristate\n");
+	printk("ES8396 SDP NUM = %d\n", id);
 	switch (id) {
 	case ES8396_SDP1:
 		return snd_soc_update_bits(codec, ES8396_SDP1_DGAIN_TDM_REG21,
@@ -2762,11 +2768,13 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	int ret;
 	int regv;
 
-	pr_debug(">>>>>>>>es8396_pcm_startup\n");
+	struct snd_soc_codec *codec = dai->codec;
+	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(codec);
+	printk(">>>>>>>>es8396_pcm_startup\n");
 	ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
-	pr_debug("ES8396_ADC_CSM_REG53===0x%x\n", ret);
+	printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	if (playback) {
-		pr_debug(">>>>>>>>>>>es8396_pcm_startup playback\n");
+		printk(">>>>>>>>>>>es8396_pcm_startup playback\n");
 		/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
@@ -2807,18 +2815,31 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
-		pr_debug("ES8396_ADC_CSM_REG53===0x%x\n", ret);
+		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	} else {
-		pr_debug(">>>>>>>>>>>es8396_pcm_startup capture\n");
+		printk(">>>>>>>>>>>es8396_pcm_startup capture\n");
+		
+		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x00);
+		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x3c);
+		snd_soc_write(tron_codec, ES8396_SDP1_OUT_FMT_REG20, 0x40);
+		/* force adc stm to normal */
+		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x40);
+		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x0);
+			/* ADC Volume =0db */
+		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
+		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
 		/* set adc alc */
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC9);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1b);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
-		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
-		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
-
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x04);		
+		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x01);
+		if (es8396->dmic_amic == MIC_DMIC) {
+		snd_soc_write(tron_codec, ES8396_SYS_MICBIAS_CTRL_REG74, 0x68);
+		}
+		else
+		{
 		/*axMixer Gain boost */
 		regv = snd_soc_read(tron_codec, ES8396_AX_MIXER_BOOST_REG2F);
 		regv |= 0x88;
@@ -2836,19 +2857,18 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 		snd_soc_write(tron_codec, ES8396_MN_MIXER_VOL_REG38, 0x44);
 		/* mnmixer high driver capacility */
 		snd_soc_write(tron_codec, ES8396_MN_MIXER_REF_LP_REG39, 0x02);
-
+	}
+		snd_soc_write(tron_codec, ES8396_SDP1_OUT_FMT_REG20, 0x00);
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
 		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
-		/* force adc stm to normal */
-		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x40);
-		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x0);
-		/* ADC Volume =0db */
-		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
-		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
+		if (es8396->dmic_amic == MIC_DMIC) {
+		snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
+		snd_soc_write(tron_codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xa0);
+		}
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
-		pr_debug("ES8396_ADC_CSM_REG53===0x%x\n", ret);
+		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	}
 	return 0;
 }
@@ -2882,7 +2902,7 @@ static int es8396_aif_mute(struct snd_soc_dai *codec_dai, int mute)
 
 	if (mute) {
 		if (es8396->spk_ctl_gpio != INVALID_GPIO) {
-			pr_debug("spk_ctl_gpio set %d\n", es8396->spk_ctl_gpio);
+			printk("spk_ctl_gpio set %d\n", es8396->spk_ctl_gpio);
 			gpio_set_value(es8396->spk_ctl_gpio, 0);
 		}
 		msleep(100);
@@ -2892,7 +2912,7 @@ static int es8396_aif_mute(struct snd_soc_dai *codec_dai, int mute)
 		reg = 0;
 		snd_soc_update_bits(codec, mute_reg_i, ES8396_AIF_MUTE, reg);
 		if (es8396->spk_ctl_gpio != INVALID_GPIO) {
-			pr_debug("spk_ctl_gpio set %d\n", es8396->spk_ctl_gpio);
+			printk("spk_ctl_gpio set %d\n", es8396->spk_ctl_gpio);
 			gpio_set_value(es8396->spk_ctl_gpio, 1);
 		}
 	}
@@ -2951,7 +2971,7 @@ static int es8396_suspend(struct device *dev)
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 	int i, ret = 0;
 
-	pr_debug("CODEC going into suspend mode\n");
+	printk("CODEC going into suspend mode\n");
 
 	es8396_set_bias_level(tron_codec, SND_SOC_BIAS_OFF);
 
@@ -2975,7 +2995,7 @@ static int es8396_resume(struct device *dev)
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 	int i, ret = 0;
 
-	pr_debug("CODEC going into es8396_resume mode\n");
+	printk("CODEC going into es8396_resume mode\n");
 	usleep_range(20000, 21000);
 	for (i = 0; i < ES8396_SDP3; i++) {
 		/* if pll be used, power up it */
@@ -2992,7 +3012,7 @@ static int es8396_resume(struct device *dev)
 	es8396_set_bias_level(tron_codec, SND_SOC_BIAS_STANDBY);
 
 	ret = snd_soc_read(tron_codec, ES8396_TEST_MODE_REG76);
-	pr_debug("*****ES8396_TEST_MODE_REG76=0x%x*********\n", ret);
+	printk("*****ES8396_TEST_MODE_REG76=0x%x*********\n", ret);
 	snd_soc_write(tron_codec, ES8396_GPIO_IRQ_REG16, 0xc0);
 	usleep_range(20000, 21000);
 	snd_soc_write(tron_codec, ES8396_GPIO_IRQ_REG16, 0x80);
@@ -3170,7 +3190,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 
 static int es8396_remove(struct snd_soc_codec *codec)
 {
-	pr_debug("!!!!!!CODEC going into es8396_remove!!!!!!\n");
+	printk("!!!!!!CODEC going into es8396_remove!!!!!!\n");
 	es8396_set_bias_level(codec, SND_SOC_BIAS_OFF);
 	return 0;
 }
@@ -3212,8 +3232,8 @@ static int init_es8396_prv(struct es8396_private *es8396)
 	es8396->mic_bias_lvl = MICBIAS_3V;
 	es8396->jackdet_enable = true;
 	es8396->gpio_int_pol = 0;
-	//es8396->dmic_amic = MIC_AMIC;
 	es8396->dmic_amic = MIC_DMIC;
+	//es8396->dmic_amic = MIC_AMIC;
 	es8396->calibrate = false;
 	es8396->pcm_pop_work_retry = 0;
 	es8396->output_device_selected = 0;
@@ -3228,7 +3248,7 @@ static int es8396_i2c_probe(struct i2c_client *i2c_client,
 	enum of_gpio_flags flags;
 	struct device_node *np = i2c_client->dev.of_node;
 
-	pr_debug("%s %d\n", __func__, __LINE__);
+	printk("%s %d\n", __func__, __LINE__);
 	es8396 = devm_kzalloc(&i2c_client->dev, sizeof(struct es8396_private),
 			      GFP_KERNEL);
 	if (!es8396) {
@@ -3256,12 +3276,12 @@ static int es8396_i2c_probe(struct i2c_client *i2c_client,
 		       __func__);
 		es8396->spk_ctl_gpio = INVALID_GPIO;
 	} else {
-		pr_debug("%d() spk codec-en-gpio\n", es8396->spk_ctl_gpio);
+		printk("%d() spk codec-en-gpio\n", es8396->spk_ctl_gpio);
 		es8396->spk_gpio_level = (flags & OF_GPIO_ACTIVE_LOW) ? 0 : 1;
 		ret = devm_gpio_request(&i2c_client->dev, es8396->spk_ctl_gpio,
 					"spk_ctl");
 		if (!ret) {
-			pr_debug("requset codec-en-gpio success!:%d\n", ret);
+			printk("requset codec-en-gpio success!:%d\n", ret);
 			gpio_direction_output(es8396->spk_ctl_gpio,
 					      !es8396->spk_gpio_level);
 		} else {

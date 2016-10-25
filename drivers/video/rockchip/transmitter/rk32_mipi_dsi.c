@@ -693,7 +693,7 @@ static int rk32_phy_init(struct dsi *dsi)
 	test_data[0] = 0x80 | 15;
 	rk32_dwc_phy_test_wr(dsi, code_hstxdatalanerequsetstatetime, test_data, 1);
 
-	test_data[0] = 0x80 | 85;
+	test_data[0] = 0x80 | 25;
 	rk32_dwc_phy_test_wr(dsi, code_hstxdatalanepreparestatetime, test_data, 1);
 
 	test_data[0] = 0x40 | 10;

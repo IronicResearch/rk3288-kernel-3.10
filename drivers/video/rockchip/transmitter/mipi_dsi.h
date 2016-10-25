@@ -257,7 +257,7 @@ struct dcs_cmd {
 	u8 cmd_len;
 	int *cmds;
 	int delay;
-	char name[32];
+	char name[400];
 };
 
 struct mipi_dcs_cmd_ctr_list {
