@@ -25,7 +25,7 @@
 
 #define IT7236_FW_AUTO_UPGRADE     1// Upgrade Firmware form driver rawDATA[] array 1:Enable ; 0:Disable
 #define IT7236_TOUCH_SLIDER_REGISTER_ADDRESS	0x00  // Change the address to read others RAM data
-#define IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS	0xFE  // Change the address to read others RAM data
+#define IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS	0x02  // Change the address to read others RAM data
 #define DRIVER_VERSION	"1.0.0"
 
 #if IT7236_FW_AUTO_UPGRADE
@@ -46,6 +46,9 @@ static int fw_upgrade_success = 0;
 static u8 wTemp[128] = {0x00};
 static char config_id[10];
 static unsigned short i2c_addr_bak;  
+
+struct workqueue_struct *IT7236_wq;
+struct delayed_work 	    it7236_delay_work;
 
 static char it7236_fw_name[256] = "IT7236_FW";	
 // Put the IT7236 firmware file at /etc/firmware/ and the file name is IT7236_FW
@@ -134,7 +137,7 @@ static bool fnFirmwareReinitialize(void)
 
 	pucBuffer[0] = 0x55;
 	i2cWriteToIt7236(gl_ts->client, 0xFB,pucBuffer,1);
-	mdelay(1);
+	mdelay(10);
 
 	pucBuffer[0] = 0xFF;
 	i2cWriteToIt7236(gl_ts->client, 0xF6, pucBuffer, 1);
@@ -184,7 +187,7 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 	printk("[IT7236] Start Upgrade Firmware \n");
 	pucBuffer[0] = 0x55;
 	i2cWriteToIt7236(gl_ts->client, 0xFB,pucBuffer,1);	
-	mdelay(10);
+	mdelay(20);
 
 	//Request Full Authority of All Registers
 	pucBuffer[0] = 0x01;
@@ -593,13 +596,14 @@ static int get_config_ver(void)
 
 static void Read_Point(struct IT7236_tk_data *ts)
 {
-	unsigned char pucSliderBuffer[2];
+	unsigned char pucSliderBuffer[4];
 	unsigned char pucProximityBuffer[2];
 
 	//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
-	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 2);
-	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-	printk("[IT7236] %s : Buffer =%#x \n",__func__,pucSliderBuffer[0]);
+	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
+//	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
+	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+//	printk("[IT7236] %s : Buffer =%d..%d \n",__func__,(int)pucProximityBuffer[0],(int)pucProximityBuffer[1]);
 
 	//TODO : Add your Code here. pucBuffer[] include the data.
 
@@ -615,6 +619,11 @@ static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static void it7236_timer_work(struct work_struct *work){
+	
+	Read_Point(gl_ts);
+	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(100));
+}
 static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct IT7236_tk_data *ts;
@@ -647,23 +656,26 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	ts->early_suspend.resume = IT7236_tk_late_resume;
 	register_early_suspend(&ts->early_suspend);
 #endif
-/*
+//for poll
 	IT7236_wq = create_workqueue("IT7236_wq");
 
 	if (!IT7236_wq)
-		goto rr_check_functionality_failed;
-*/
+		goto err_check_functionality_failed;
+
+	INIT_DELAYED_WORK(&it7236_delay_work, it7236_timer_work);
 	
+	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(15000));
 
-
+/*
+ 	// for int
 	struct device_node *np = client->dev.of_node;
 	unsigned long irq_flags;
 	ts->irq_gpio = of_get_named_gpio_flags(np, "irq-gpio", 0, (enum of_gpio_flags *)&irq_flags);
 	gl_ts->client->irq = gpio_to_irq(ts->irq_gpio);
 	if (ts->irq_gpio) {
 		printk("[IT7236] : irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
-		ret = request_threaded_irq(gpio_to_irq(ts->irq_gpio), NULL,
-				   IT7236_tk_work_func,/*IRQF_TRIGGER_FALLING*/IRQF_TRIGGER_LOW|IRQF_ONESHOT,
+		ret = request_irq(gpio_to_irq(ts->irq_gpio), NULL,
+				   IT7236_tk_work_func,IRQF_TRIGGER_FALLING,
 				   IT7236_I2C_NAME, ts);
 		if (ret == 0){
 			ts->use_irq = 1;
@@ -675,12 +687,15 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	}else{
 		printk("[IT7236] : FAIL irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
 	}
+	*/
+
+
 
 	i2c_addr_bak = gl_ts->client->addr;
 	#if IT7236_FW_AUTO_UPGRADE
 	IT7236_upgrade_auto();
 	#endif
-	get_config_ver();
+//	get_config_ver();
 
 	return 0;
 
@@ -812,8 +827,8 @@ err_create_class:
 err_add_dev:
 err_alloc_dev:
 	return ret;
-//	if (IT7236_wq)
-//	destroy_workqueue(IT7236_wq);
+	if (IT7236_wq)
+	destroy_workqueue(IT7236_wq);
 }
 
 static void __exit IT7236_tk_exit(void)
@@ -824,8 +839,8 @@ static void __exit IT7236_tk_exit(void)
 	cdev_del(&ite7236_cdev);
 	unregister_chrdev_region(dev, 1);
 	i2c_del_driver(&IT7236_tk_driver);
-	//if (IT7236_wq)
-//	destroy_workqueue(IT7236_wq);
+	if (IT7236_wq)
+	destroy_workqueue(IT7236_wq);
 }
 
 module_init( IT7236_tk_init);

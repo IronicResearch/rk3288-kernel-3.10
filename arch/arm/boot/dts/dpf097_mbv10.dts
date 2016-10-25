@@ -540,13 +540,13 @@
               poll_delay_ms = <30>;
               layout = <1>;
        };*/
-/*	
+	
 	it7236@46{
 		compatible =  "ite,7236";
 		reg = <0x46>;
 		irq-gpio = <&gpio7 GPIO_B1 IRQ_TYPE_LEVEL_LOW>;
 	};
-*/	
+	
 };
 
 &i2c5 {
