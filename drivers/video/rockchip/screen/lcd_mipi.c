@@ -76,15 +76,19 @@ static void rk_mipi_screen_pwr_enable(struct mipi_screen *screen)
 		gpio_direction_output(screen->lcd_en_gpio, !screen->lcd_en_atv_val);
 		mipidelay(screen->lcd_en_delay);
 		gpio_direction_output(screen->lcd_en_gpio, screen->lcd_en_atv_val);
-		mipidelay(screen->lcd_en_delay);
+		mipidelay(300);
 	} else
 		MIPI_SCREEN_DBG("lcd_en_gpio is null\n");
 
 	if (screen->lcd_rst_gpio != INVALID_GPIO) {
 		gpio_direction_output(screen->lcd_rst_gpio, !screen->lcd_rst_atv_val);
-		mipidelay(screen->lcd_rst_delay);
+		mipidelay(10);
 		gpio_direction_output(screen->lcd_rst_gpio, screen->lcd_rst_atv_val);
-		mipidelay(screen->lcd_rst_delay);
+		mipidelay(50);
+		gpio_direction_output(screen->lcd_rst_gpio, !screen->lcd_rst_atv_val);
+		mipidelay(1);
+		gpio_direction_output(screen->lcd_rst_gpio, screen->lcd_rst_atv_val);
+		mipidelay(250);
 	} else
 		MIPI_SCREEN_DBG("lcd_rst_gpio is null\n");
 }
