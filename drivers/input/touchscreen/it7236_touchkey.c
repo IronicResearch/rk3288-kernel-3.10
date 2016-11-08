@@ -17,6 +17,7 @@
 #include <linux/async.h>
 #include <linux/workqueue.h>
 #include <linux/of_gpio.h>
+#include <linux/regulator/consumer.h>
 //#include <mach/gpio.h>
 #include <linux/irq.h>
 //#include <mach/board.h>
@@ -35,6 +36,7 @@
 #include "it7236_touchkey.h"
 
 #define IT7236_I2C_NAME "it7236_touchkey"
+#define IT7236_IIC_SPEED 		200*1000
 
 static int ite7236_major = 0;	// dynamic major by default
 static int ite7236_minor = 0;
@@ -65,11 +67,13 @@ static int i2cReadFromIt7236(struct i2c_client *client, unsigned char bufferInde
 	struct i2c_msg msgs[2] = { {
 		.addr = client->addr,
 		.flags = 0,
+		.scl_rate = IT7236_IIC_SPEED,
 		.len = 1,
 		.buf = &bufferIndex
 		}, {
 		.addr = client->addr,
 		.flags = I2C_M_RD,
+		.scl_rate = IT7236_IIC_SPEED,
 		.len = dataLength,
 		.buf = dataBuffer
 		}
@@ -89,6 +93,7 @@ static int i2cWriteToIt7236(struct i2c_client *client, unsigned char bufferIndex
 		.addr = client->addr,
 		.flags = 0,
 		.len = dataLength + 1,
+		.scl_rate = IT7236_IIC_SPEED,
 		.buf = buffer4Write
 		}
 	};
@@ -129,6 +134,36 @@ static bool waitCommandDone(void)
 		return  false;
 }
 
+void WriteCommd(unsigned char Command)
+{
+	int count = 0;
+	unsigned char pucBuffer[1];
+	unsigned char data[1];
+	unsigned char pucommdbuf[2]={0x01,0x00};
+	pucommdbuf[1] = Command;
+
+	//Page switch to 0
+	pucBuffer[0] =0x00;
+	i2cWriteToIt7236(gl_ts->client, 0xF0, pucBuffer, 1);
+
+	pucBuffer[0] =0x80;		
+	i2cWriteToIt7236(gl_ts->client, 0xF1, pucBuffer, 1);
+	
+	do{
+		i2cReadFromIt7236(gl_ts->client, 0xFA, data, 1);
+		count++;
+	} while( (data[0] != 0x80) && (count < 20));
+	
+	i2cWriteToIt7236(gl_ts->client, 0x40, pucommdbuf, 2);
+
+	pucBuffer[0] =0x40;
+	i2cWriteToIt7236(gl_ts->client, 0xF1, pucBuffer, 1);
+	mdelay(200);
+}
+
+
+
+
 static bool fnFirmwareReinitialize(void)
 {
 	int count = 0;
@@ -160,7 +195,8 @@ static bool fnFirmwareReinitialize(void)
 
 	pucBuffer[0] = 0x00;
 	i2cWriteToIt7236(gl_ts->client, 0xF1, pucBuffer, 1);
-
+     
+    WriteCommd(0XF0); //Rest CMD
 	return true;
 }
 
@@ -187,7 +223,7 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 	printk("[IT7236] Start Upgrade Firmware \n");
 	pucBuffer[0] = 0x55;
 	i2cWriteToIt7236(gl_ts->client, 0xFB,pucBuffer,1);	
-	mdelay(20);
+	mdelay(30);
 
 	//Request Full Authority of All Registers
 	pucBuffer[0] = 0x01;
@@ -362,9 +398,24 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 
 	printk("[IT7236] Success to Upgrade Firmware\n\n");
 
-	get_config_ver();
+//	get_config_ver();
 	fw_upgrade_success = 0;
-	enable_irq(gl_ts->client->irq);
+/*
+	struct regulator *regulator_tp = NULL;
+	regulator_tp = regulator_get(NULL,"rk818_ldo5");
+	if (regulator_tp == NULL) {
+		printk("%s: regulator get failed,regulator name:\n",__func__);
+	}
+	
+	regulator_disable(regulator_tp);
+	msleep(10);
+	printk("7236 vcc_tp \n");
+	regulator_set_voltage(regulator_tp, 3300000,3300000);
+	printk("7236 vcc_tp1 \n");
+	regulator_enable(regulator_tp);
+	regulator_put(regulator_tp);
+	*/
+//	enable_irq(gl_ts->client->irq);
 	return 0;
 }
 
@@ -413,9 +464,11 @@ static u32 get_firmware_ver_cmd(void)
 #if IT7236_FW_AUTO_UPGRADE
 static ssize_t IT7236_upgrade_auto(void)
 {
-	int retry = 2;
-	while(((it7236_upgrade((u8 *)rawDATA,sizeof(rawDATA))) != 0) && (retry > 0))
+	int retry = 3;
+	while(((it7236_upgrade((u8 *)rawDATA,sizeof(rawDATA))) != 0) && (retry > 0)){
 		retry--;
+		msleep(10);
+	}
 
 	return retry;
 }
@@ -536,7 +589,7 @@ static int ite7236_close(struct inode *inode, struct file *filp)
 }
 
 
-
+#if 1
 static int get_config_ver(void)
 {
 	char pucBuffer[1];
@@ -593,21 +646,43 @@ static int get_config_ver(void)
 
 	return ret;
 }
+#endif 
 
+int vcc_tp_reinit = 0;
 static void Read_Point(struct IT7236_tk_data *ts)
 {
 	unsigned char pucSliderBuffer[4];
-	unsigned char pucProximityBuffer[2];
-
+	/*
+	if (vcc_tp_reinit == 0){
+		struct regulator *regulator_tp = NULL;
+		regulator_tp = regulator_get(NULL,"rk818_ldo5");
+		if (regulator_tp == NULL) {
+			printk("%s: regulator get failed,regulator name:\n",__func__);
+		}
+		//regulator_disable(regulator_tp);
+		regulator_force_disable(regulator_tp);
+	//	
+		msleep(2000);
+		printk("7236 vcc_tp \n");
+		regulator_set_voltage(regulator_tp, 3300000,3300000);
+		printk("7236 vcc_tp1 \n");
+		regulator_enable(regulator_tp);
+		regulator_put(regulator_tp);
+	//	
+		vcc_tp_reinit++ ;
+	}
+*/
 	//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+//	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+	input_report_abs(gl_ts->input_dev, ABS_X, (int)pucSliderBuffer[1]);
 //	printk("[IT7236] %s : Buffer =%d..%d \n",__func__,(int)pucProximityBuffer[0],(int)pucProximityBuffer[1]);
 
 	//TODO : Add your Code here. pucBuffer[] include the data.
 
-	input_sync(input_dev);
+//	enable_irq(gl_ts->client->irq);
+//	input_sync(input_dev);
 
 }
 
@@ -615,7 +690,7 @@ static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 {
 	disable_irq_nosync(gl_ts->client->irq);
 	Read_Point(gl_ts);
-	enable_irq(gl_ts->client->irq);
+//	enable_irq(gl_ts->client->irq);
 	return IRQ_HANDLED;
 }
 
@@ -657,6 +732,7 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	register_early_suspend(&ts->early_suspend);
 #endif
 //for poll
+
 	IT7236_wq = create_workqueue("IT7236_wq");
 
 	if (!IT7236_wq)
@@ -664,17 +740,18 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 
 	INIT_DELAYED_WORK(&it7236_delay_work, it7236_timer_work);
 	
-	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(15000));
+	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(5000));
 
-/*
+
  	// for int
+	/*
 	struct device_node *np = client->dev.of_node;
 	unsigned long irq_flags;
 	ts->irq_gpio = of_get_named_gpio_flags(np, "irq-gpio", 0, (enum of_gpio_flags *)&irq_flags);
 	gl_ts->client->irq = gpio_to_irq(ts->irq_gpio);
 	if (ts->irq_gpio) {
 		printk("[IT7236] : irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
-		ret = request_irq(gpio_to_irq(ts->irq_gpio), NULL,
+		ret = request_irq(gl_ts->client->irq,
 				   IT7236_tk_work_func,IRQF_TRIGGER_FALLING,
 				   IT7236_I2C_NAME, ts);
 		if (ret == 0){
@@ -687,7 +764,7 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	}else{
 		printk("[IT7236] : FAIL irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
 	}
-	*/
+*/	
 
 
 
@@ -804,6 +881,7 @@ static int __init IT7236_tk_init(void)
 	//set_bit(EV_SYN, input_dev->evbit);
 	//set_bit(EV_KEY, input_dev->evbit);
 	set_bit(EV_ABS, input_dev->evbit);
+	input_set_abs_params(input_dev, ABS_X,0, 60, 0, 0);
 	//set_bit(BTN_TOUCH, input_dev->keybit);
 	//set_bit(BTN_2, input_dev->keybit);
 	
@@ -813,6 +891,7 @@ static int __init IT7236_tk_init(void)
 		goto dev_reg_err;
 	}
 
+//	msleep(10000);
 	return i2c_add_driver(&IT7236_tk_driver);
 
 

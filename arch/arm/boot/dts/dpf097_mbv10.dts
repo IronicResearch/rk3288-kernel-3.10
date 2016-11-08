@@ -203,6 +203,8 @@
 		scrl_a = <&gpio5 GPIO_B4 GPIO_ACTIVE_LOW >;
 		scrl_b = <&gpio5 GPIO_B5 GPIO_ACTIVE_LOW >;
 		scrl_k = <&gpio5 GPIO_C3 GPIO_ACTIVE_LOW >;
+		tpo1 = <&gpio5 GPIO_B2 GPIO_ACTIVE_LOW >;
+		tpo2 = <&gpio5 GPIO_B3 GPIO_ACTIVE_LOW >;
 	};
 
 	usb_control {
@@ -539,7 +541,8 @@
               irq_enable = <1>;
               poll_delay_ms = <30>;
               layout = <1>;
-       };*/
+       };
+	*/
 	
 	it7236@46{
 		compatible =  "ite,7236";
@@ -705,11 +708,11 @@
 &clk_gpu_dvfs_table {
 	operating-points = <
 		/* KHz    uV */
-		100000 900000
-		200000 900000
-		300000 950000
-		420000 1050000
-	//	500000 1100000
+	//	100000 900000
+	//	200000 900000
+	//	300000 950000
+	//	420000 1050000
+		500000 1150000
 		>;
 	status="okay";
 };
@@ -721,6 +724,7 @@
 		300000 1050000
 		400000 1100000
 		533000 1150000
+		600000 1200000
 		>;
 
 	freq-table = <
@@ -941,6 +945,7 @@
 		virtual_power = <0>;
 		power_dc2otg = <0>;
 		dc_det_adc = <0>;
+		dc_det_gpio = <&gpio0 GPIO_B0 GPIO_ACTIVE_LOW>;
 	};
 };
 &lcdc_vdd_domain {
