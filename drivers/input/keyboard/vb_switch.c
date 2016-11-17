@@ -23,7 +23,7 @@
 #include <linux/of_irq.h>
 #include <linux/of_gpio.h>
 #include <linux/of_platform.h>
-
+#include <linux/input/mt.h>
 #define DELAY_JIFFIES  5
 
 #define IGNORE  0;
@@ -57,6 +57,7 @@ struct vb_switch_drvdata {
 	int time_state;
 	struct vb_switch_desc switch_desc[8];
 	struct input_dev *input;
+	struct input_dev *input1;
 	struct delayed_work work;
 	struct workqueue_struct *wq;
 	struct timer_list timer;
@@ -98,8 +99,8 @@ static int vb_switch_parse_dt(struct platform_device *pdev,
 	gpio = of_get_named_gpio_flags(node, "chan_k", 0, &flags);
 	if (gpio_is_valid(gpio)){
 		ddata->switch_desc[2].gpio = gpio;
-		ddata->switch_desc[2].code = 28;
-		ddata->switch_desc[2].lable = "enter";
+		ddata->switch_desc[2].code = BTN_STYLUS2;
+		ddata->switch_desc[2].lable = "BUTTON_STYLUS_SECONDARY";
 	} else {
 		ddata->switch_desc[2].gpio = -1;
 	}
@@ -128,8 +129,8 @@ static int vb_switch_parse_dt(struct platform_device *pdev,
 	gpio = of_get_named_gpio_flags(node, "scrl_k", 0, &flags);
 	if (gpio_is_valid(gpio)){
 		ddata->switch_desc[5].gpio = gpio;
-		ddata->switch_desc[5].code = 158;
-		ddata->switch_desc[5].lable = "back";
+		ddata->switch_desc[5].code = BTN_STYLUS;
+		ddata->switch_desc[5].lable = "BUTTON_STYLUS_PRIMARY";
 	} else {
 		ddata->switch_desc[5].gpio = -1;
 	}
@@ -277,29 +278,43 @@ int left_flag = -1,right_flag = -1,up_flag = -1,down_flag = -1;
 	*/
 //}	
 
-static int switch_desc6 = -1,switch_desc7 = -1;
+static int switch_desc2 = -1;switch_desc5 = -1,switch_desc6 = -1,switch_desc7 = -1;
 static void vc_irq_delay_worker(struct work_struct *work)
 {
 
 	//printk("%s****************************************************************************\n",__func__);
 	struct vb_switch_drvdata *ddata = container_of((work), struct vb_switch_drvdata, work.work);
-	//printk("%s  key   status %d \n",ddata->switch_desc[6].lable,gpio_get_value(ddata->switch_desc[6].gpio));
-	//printk("%s  key   status %d \n",ddata->switch_desc[7].lable,gpio_get_value(ddata->switch_desc[7].gpio));
-	if(!gpio_get_value(ddata->switch_desc[2].gpio)){
-				input_report_key(ddata->input,ddata->switch_desc[2].code,1); 
-				input_sync(ddata->input);
-				input_report_key(ddata->input, ddata->switch_desc[2].code, 0);
-				input_sync(ddata->input);
+//	printk("%s  key   status %d \n",ddata->switch_desc[2].lable,gpio_get_value(ddata->switch_desc[2].gpio));
+//	printk("%s  key   status %d \n",ddata->switch_desc[5].lable,gpio_get_value(ddata->switch_desc[5].gpio));
+
+	if((switch_desc2 == -1)&&(!gpio_get_value(ddata->switch_desc[2].gpio))){
+				printk("switch_desc2\n");
+				input_report_key(ddata->input1,ddata->switch_desc[2].code,1); 
+				input_sync(ddata->input1);
+				switch_desc2 = 1;
+	
+	}else if ((switch_desc2 == 1)&&(gpio_get_value(ddata->switch_desc[2].gpio)))
+	{
+				input_report_key(ddata->input1,ddata->switch_desc[2].code,0); 
+				input_sync(ddata->input1);
+				switch_desc2 = -1;
 	}
 	
-	if(!gpio_get_value(ddata->switch_desc[5].gpio)){
-				input_report_key(ddata->input,ddata->switch_desc[5].code,1); 
-				input_sync(ddata->input);
-				input_report_key(ddata->input, ddata->switch_desc[5].code, 0);
-				input_sync(ddata->input);
+	if((switch_desc5 == -1)&&(!gpio_get_value(ddata->switch_desc[5].gpio))){
+				printk("switch_desc5\n");
+				input_report_key(ddata->input1,ddata->switch_desc[5].code,1); 
+				input_sync(ddata->input1);
+				switch_desc5 = 1;
+	}else if ((switch_desc5 == 1)&&(gpio_get_value(ddata->switch_desc[5].gpio)))
+	{
+				input_report_key(ddata->input1,ddata->switch_desc[5].code,0); 
+				input_sync(ddata->input1);
+				switch_desc5 = -1;
 	}
 	
-/*
+
+	
+
 	if((switch_desc6 == -1) &&(!gpio_get_value(ddata->switch_desc[6].gpio))){
 				input_report_key(ddata->input,ddata->switch_desc[6].code,1); 
 				input_sync(ddata->input);
@@ -321,7 +336,8 @@ static void vc_irq_delay_worker(struct work_struct *work)
 				input_sync(ddata->input);
 				switch_desc7 = -1;
 	}
-*/
+	
+
 	queue_delayed_work(ddata->wq, &ddata->work, msecs_to_jiffies(30));
 	
 }
@@ -486,6 +502,8 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 
 }
 
+#define MAX_CONTACTS 		1
+
 static  int  vb_switch_probe(struct platform_device *pdev)
 {
 
@@ -504,7 +522,7 @@ static  int  vb_switch_probe(struct platform_device *pdev)
 	}  
 	platform_set_drvdata(pdev, ddata);
 
-	input->name = "rk30-vb-switch";
+	input->name = "rk30-vb-switch-mouse";
 	input->phys = "gpio-switch/input4";
 	input->dev.parent = &pdev->dev;
 
@@ -520,23 +538,103 @@ static  int  vb_switch_probe(struct platform_device *pdev)
 
 	//	set_bit(EV_KEY, input->evbit);
 	
+
+	struct input_dev *input1; 
+	input1 = input_allocate_device();
+	if (!ddata || !input1) {
+		ret = -ENOMEM;
+		goto error1;
+	}  
+
+	input1->name = "rk30-vb-switch-touch";
+	input1->phys = "gpio-switch/input5";
+	input1->dev.parent = &pdev->dev;
+
+	input1->id.bustype = BUS_HOST;
+	input1->id.vendor = 0x0001;
+	input1->id.product = 0x0001;
+	input1->id.version = 0x0200;
+
+	ddata->input1 = input1;
+
+
+/*multi touch
+
+	__set_bit(EV_ABS, input->evbit);
+	__set_bit(EV_KEY, input->evbit);
+	__set_bit(EV_REP, input->evbit);
+	__set_bit(INPUT_PROP_DIRECT, input->propbit);
+	input_mt_init_slots(input, (MAX_CONTACTS+1), 0);
+	set_bit(ABS_MT_POSITION_X, input->absbit);
+	set_bit(ABS_MT_POSITION_Y, input->absbit);
+	set_bit(ABS_MT_TOUCH_MAJOR, input->absbit);
+	set_bit(ABS_MT_WIDTH_MAJOR, input->absbit);
+
+	input_set_abs_params(input,ABS_MT_POSITION_X, 0, 768, 0, 0);
+	input_set_abs_params(input,ABS_MT_POSITION_Y, 0, 1024, 0, 0);
+	input_set_abs_params(input,ABS_MT_TOUCH_MAJOR, 0, 3, 0, 0);
+	input_set_abs_params(input,ABS_MT_WIDTH_MAJOR, 0, 4, 0, 0);
+	input->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) | BIT_MASK(BTN_LEFT) | BIT_MASK(BTN_RIGHT) | BIT_MASK(BTN_MIDDLE)| BIT_MASK(BTN_STYLUS2) | BIT_MASK(BTN_STYLUS);
+*/
+
+
+
+//single touch
+
+	input1->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) |  BIT_MASK(EV_SYN);
+	input1->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) | BIT_MASK(BTN_MIDDLE)| BIT_MASK(BTN_STYLUS2) | BIT_MASK(BTN_STYLUS);
+
+
+	__set_bit(INPUT_PROP_DIRECT, input1->propbit);
+	input_set_abs_params(input1, ABS_PRESSURE, 0, 512, 0, 0);
+
+
+/********************************************************************/
+ //  mouse
+
 	input->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REL);
 	input->keybit[BIT_WORD(BTN_MOUSE)] = BIT_MASK(BTN_LEFT) | BIT_MASK(BTN_RIGHT) | BIT_MASK(BTN_MIDDLE);
 	input->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 	input->keybit[BIT_WORD(BTN_MOUSE)] |= BIT_MASK(BTN_SIDE) | BIT_MASK(BTN_EXTRA) | BIT_MASK(BTN_STYLUS2) | BIT_MASK(BTN_STYLUS);
 	input->relbit[0] |= BIT_MASK(REL_WHEEL);
 	
-	/*
-	input->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_SYN);
-	__set_bit(EV_ABS, input->evbit);
-	__set_bit(EV_KEY, input->evbit);
-	__set_bit(EV_REP, input->evbit);
-	set_bit(ABS_MT_POSITION_X, input->absbit);
-	set_bit(ABS_MT_POSITION_Y, input->absbit);	
-	input_set_abs_params(input,ABS_MT_POSITION_X, 0, 0, 0, 0);
-	input_set_abs_params(input,ABS_MT_POSITION_Y, 0, 0, 0, 0);
+
+
+/*************************************************************input1*******************************************************************************************/
+
+/*
+	struct input_dev *input1; 
+	input1 = input_allocate_device();
+	if (!ddata || !input1) {
+		ret = -ENOMEM;
+		goto error1;
+	}  
+
+	input1->name = "rk30-vb-switch-touch";
+	input1->phys = "gpio-switch/input5";
+	input1->dev.parent = &pdev->dev;
+
+	input1->id.bustype = BUS_HOST;
+	input1->id.vendor = 0x0003;
+	input1->id.product = 0x0001;
+	input1->id.version = 0x0100;
+
+	ddata->input1 = input1;
+
+	__set_bit(EV_ABS, input1->evbit);
+	__set_bit(EV_KEY, input1->evbit);
+	__set_bit(EV_REP, input1->evbit);
+	input_mt_init_slots(input1, (MAX_CONTACTS+1), 0);
+	set_bit(ABS_MT_POSITION_X, input1->absbit);
+	set_bit(ABS_MT_POSITION_Y, input1->absbit);
+	set_bit(ABS_MT_TOUCH_MAJOR, input1->absbit);
+	set_bit(ABS_MT_WIDTH_MAJOR, input1->absbit);
+
+	input_set_abs_params(input1,ABS_MT_POSITION_X, 0, 255, 0, 0);
+	input_set_abs_params(input1,ABS_MT_POSITION_Y, 0, 255, 0, 0);
+	input_set_abs_params(input1,ABS_MT_TOUCH_MAJOR, 0, 3, 0, 0);
+	input_set_abs_params(input1,ABS_MT_WIDTH_MAJOR, 0, 4, 0, 0);
 	*/
-	
 	
 	
 	error = vb_switch_parse_dt(pdev, ddata);
@@ -584,6 +682,14 @@ static  int  vb_switch_probe(struct platform_device *pdev)
 		printk("register input device failed %d \n",ret);
 		goto error3;
 	}
+
+	ret = input_register_device(ddata->input1);
+	if(ret) {
+		printk("register input1 device failed %d \n",ret);
+		goto error3;
+	}
+
+
 	return 0;
 error3:
 	input_free_device(ddata->input);

@@ -750,27 +750,7 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x01);
 		if (es8396->dmic_amic == MIC_DMIC) {
 		snd_soc_write(tron_codec, ES8396_SYS_MICBIAS_CTRL_REG74, 0x68);
-		}
-		else
-		{
-		/*axMixer Gain boost */
-		regv = snd_soc_read(tron_codec, ES8396_AX_MIXER_BOOST_REG2F);
-		regv |= 0x88;
-		snd_soc_write(tron_codec, ES8396_AX_MIXER_BOOST_REG2F, regv);
-		/* axmixer vol = +12db */
-		snd_soc_write(tron_codec, ES8396_AX_MIXER_VOL_REG30, 0xaa);
-		/* axmixer high driver capacility */
-		snd_soc_write(tron_codec, ES8396_AX_MIXER_REF_LP_REG31, 0x02);
-
-		/*MNMixer Gain boost */
-		regv = snd_soc_read(tron_codec, ES8396_MN_MIXER_BOOST_REG37);
-		regv |= 0x88;
-		snd_soc_write(tron_codec, ES8396_MN_MIXER_BOOST_REG37, regv);
-		/* mnmixer vol = +12db */
-		snd_soc_write(tron_codec, ES8396_MN_MIXER_VOL_REG38, 0x44);
-		/* mnmixer high driver capacility */
-		snd_soc_write(tron_codec, ES8396_MN_MIXER_REF_LP_REG39, 0x02);
-	}
+		}		
 		snd_soc_write(tron_codec, ES8396_SDP1_OUT_FMT_REG20, 0x00);
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
@@ -917,6 +897,8 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 			   struct snd_kcontrol *kcontrol, int event)
 {
 	unsigned int index;
+	unsigned int regv;
+	int  ret = 0;
 
 	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
@@ -948,6 +930,45 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
 		snd_soc_write(w->codec, ES8396_SHARED_DATA_REG1E,
 			      es8396_equalizer_lpf_bt_incall[59]);
+				/* set adc alc */
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
+		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
+		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
+
+		/*axMixer Gain boost */
+		regv = snd_soc_read(tron_codec, ES8396_AX_MIXER_BOOST_REG2F);
+		regv |= 0x88;
+		snd_soc_write(tron_codec, ES8396_AX_MIXER_BOOST_REG2F, regv);
+		/* axmixer vol = +12db */
+		snd_soc_write(tron_codec, ES8396_AX_MIXER_VOL_REG30, 0xaa);
+		/* axmixer high driver capacility */
+		snd_soc_write(tron_codec, ES8396_AX_MIXER_REF_LP_REG31, 0x02);
+
+		/*MNMixer Gain boost */
+		regv = snd_soc_read(tron_codec, ES8396_MN_MIXER_BOOST_REG37);
+		regv |= 0x88;
+		snd_soc_write(tron_codec, ES8396_MN_MIXER_BOOST_REG37, regv);
+		/* mnmixer vol = +12db */
+		snd_soc_write(tron_codec, ES8396_MN_MIXER_VOL_REG38, 0x44);
+		/* mnmixer high driver capacility */
+		snd_soc_write(tron_codec, ES8396_MN_MIXER_REF_LP_REG39, 0x02);
+
+		msleep(200);
+		/* ADC STM and Digital Startup, ADC DS Mode */
+		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
+		/* force adc stm to normal */
+		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x40);
+		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x0);
+		/* ADC Volume =0db */
+		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
+		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
+		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
@@ -3000,6 +3021,25 @@ static struct snd_soc_dai_driver es8396_dai[] = {
 			.formats = ES8396_FORMATS,
 		},
 		.ops = &es8396_aif1_dai_ops,
+	},
+	{
+		.name = "ES8396 Voice",
+		.id = 1,
+		.playback = {
+			.stream_name = "Playback",
+			.channels_min = 1,
+			.channels_max = 2,
+			.rates = ES8396_RATES,
+			.formats = ES8396_FORMATS,
+		},
+		.capture = {
+			.stream_name = "Capture",
+			.channels_min = 1,
+			.channels_max = 2,
+			.rates = ES8396_RATES,
+			.formats = ES8396_FORMATS,
+		},
+		.ops = &es8396_aif2_dai_ops,
 	},
 };
 

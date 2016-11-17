@@ -676,7 +676,11 @@ static void Read_Point(struct IT7236_tk_data *ts)
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
 //	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+	
 	input_report_abs(gl_ts->input_dev, ABS_X, (int)pucSliderBuffer[1]);
+	input_report_key(gl_ts->input_dev,BTN_TOUCH, 1);
+	input_sync(gl_ts->input_dev);
+
 //	printk("[IT7236] %s : Buffer =%d..%d \n",__func__,(int)pucProximityBuffer[0],(int)pucProximityBuffer[1]);
 
 	//TODO : Add your Code here. pucBuffer[] include the data.
@@ -880,8 +884,16 @@ static int __init IT7236_tk_init(void)
 
 	//set_bit(EV_SYN, input_dev->evbit);
 	//set_bit(EV_KEY, input_dev->evbit);
-	set_bit(EV_ABS, input_dev->evbit);
-	input_set_abs_params(input_dev, ABS_X,0, 60, 0, 0);
+	__set_bit(EV_ABS, input_dev->evbit);
+	__set_bit(ABS_X, input_dev->absbit);
+	__set_bit(ABS_Y, input_dev->absbit);
+
+	__set_bit(EV_SYN, input_dev->evbit);
+	__set_bit(EV_KEY, input_dev->evbit);
+	__set_bit(BTN_TOUCH, input_dev->keybit);
+
+	input_set_abs_params(input_dev, ABS_X, 0, 60, 0, 0);
+
 	//set_bit(BTN_TOUCH, input_dev->keybit);
 	//set_bit(BTN_2, input_dev->keybit);
 	
