@@ -357,6 +357,9 @@
 				
 				hsync-active = <0>;
 				vsync-active = <0>;
+				
+				screen-width            = <147>;
+				screen-hight            = <206>;
 				de-active = <0>;
 				pixelclk-active = <0>;
 				swap-rb = <0>;

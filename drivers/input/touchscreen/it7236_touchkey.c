@@ -22,7 +22,7 @@
 #include <linux/irq.h>
 //#include <mach/board.h>
 //#include "IT7236_touchkey.h"
-
+#include <linux/input/mt.h>
 
 #define IT7236_FW_AUTO_UPGRADE     1// Upgrade Firmware form driver rawDATA[] array 1:Enable ; 0:Disable
 #define IT7236_TOUCH_SLIDER_REGISTER_ADDRESS	0x00  // Change the address to read others RAM data
@@ -649,38 +649,120 @@ static int get_config_ver(void)
 #endif 
 
 int vcc_tp_reinit = 0;
+extern struct input_dev *vb_input_dev ;
+int it7236_flag = 0;
+unsigned int touch_value = 0, touch_value1= 0;
 static void Read_Point(struct IT7236_tk_data *ts)
 {
 	unsigned char pucSliderBuffer[4];
-	/*
-	if (vcc_tp_reinit == 0){
-		struct regulator *regulator_tp = NULL;
-		regulator_tp = regulator_get(NULL,"rk818_ldo5");
-		if (regulator_tp == NULL) {
-			printk("%s: regulator get failed,regulator name:\n",__func__);
-		}
-		//regulator_disable(regulator_tp);
-		regulator_force_disable(regulator_tp);
-	//	
-		msleep(2000);
-		printk("7236 vcc_tp \n");
-		regulator_set_voltage(regulator_tp, 3300000,3300000);
-		printk("7236 vcc_tp1 \n");
-		regulator_enable(regulator_tp);
-		regulator_put(regulator_tp);
-	//	
-		vcc_tp_reinit++ ;
-	}
-*/
-	//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
+		//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-//	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
-	
-	input_report_abs(gl_ts->input_dev, ABS_X, (int)pucSliderBuffer[1]);
-	input_report_key(gl_ts->input_dev,BTN_TOUCH, 1);
-	input_sync(gl_ts->input_dev);
+	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+//	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]*(int)(255/60));
+//	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]);
 
+	// for key_mouse	
+/*
+	touch_value1 = (int)pucSliderBuffer[1];
+	if((int)pucSliderBuffer[1] != 255  && touch_value1 != touch_value ){
+	//	input_report_abs(vb_input_dev, ABS_X, (int)pucSliderBuffer[1]*(int)(255/60));  
+		
+		input_report_key(vb_input_dev,BTN_5,(int)pucSliderBuffer[1]*(int)(255/60));
+		input_sync(vb_input_dev);
+		touch_value = (int)pucSliderBuffer[1];
+		printk("it7236 press\n");
+		it7236_flag = 1;
+	}
+	
+	
+	else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
+	//	input_report_rel(dev, REL_X, (int)pucSliderBuffer[1]*(int)(255/60)); 
+	//	input_sync(input_dev);
+		touch_value = (int)pucSliderBuffer[1];
+		input_report_key(vb_input_dev,BTN_5,5);
+		input_sync(vb_input_dev);
+		printk("it7236 release\n");
+		it7236_flag = 0;
+	}
+*/
+	
+ // for vb_switch	
+ 
+ 
+ /*
+	if((int)pucSliderBuffer[1] != 255){
+		input_report_key(vb_input_dev,BTN_LEFT,1); 
+		input_sync(vb_input_dev);
+		printk("it7236 press\n");
+		it7236_flag = 1;
+	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
+		input_report_key(vb_input_dev,BTN_LEFT,0); 
+		input_sync(vb_input_dev);
+		printk("it7236 release\n");
+		it7236_flag = 0;
+	}
+*/
+//for  single
+
+	if((int)pucSliderBuffer[1] != 255){
+	//	input_report_key(input_dev, BTN_TOUCH, 1);
+	/*
+		int tmp = 0;
+		touch_value1 = (int)pucSliderBuffer[1]*(int)(255/60);//记录本次值
+		if (touch_value1>=touch_value){//触摸条不稳定 按在同一个点时值会有一点波动
+			if(touch_value1 - touch_value >= 12)
+				tmp = 1;//波动比较大
+			else
+				tmp = 2;
+		}else{
+			if(touch_value - touch_value1 >= 12)
+				tmp = 1;//波动比较大
+			else
+				tmp = 2;
+		}
+		*/
+	//	if(tmp == 1){
+			input_report_abs(input_dev, ABS_X, (int)pucSliderBuffer[1]*(int)(255/60)); 
+			input_sync(input_dev);
+			touch_value = (int)pucSliderBuffer[1]*(int)(255/60);//记录上次值
+			it7236_flag = 1;
+	//	}
+		printk("it7236 press\n");
+		
+	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
+	//	input_report_key(input_dev, BTN_TOUCH, 0);
+	//	input_sync(input_dev);
+		input_report_abs(input_dev, ABS_Y, touch_value);//避免逻辑问题 释放时报另一个轴
+		input_sync(input_dev);
+		printk("it7236 release\n");
+		it7236_flag = 0;
+	}
+
+
+//for mul
+/*
+	if((int)pucSliderBuffer[1] != 255){
+		input_mt_slot(input_dev, 0);
+		//input_report_abs(input_dev, ABS_MT_TRACKING_ID, 0);
+		input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, true);
+		input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, 3);
+		input_report_abs(input_dev, ABS_MT_POSITION_X, (int)pucSliderBuffer[1]*(int)(255/60));
+		input_report_abs(input_dev, ABS_MT_POSITION_Y, (int)pucSliderBuffer[1]*(int)(255/60));
+		input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, 1);
+		//input_mt_sync(input_dev);
+		input_sync(input_dev);
+		printk("it7236 press\n");
+		it7236_flag = 1;
+	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
+			input_mt_slot(input_dev, 0);
+		//	input_report_abs(input_dev, ABS_MT_TRACKING_ID, -1);
+			input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, false);
+		printk("it7236 release\n");
+		it7236_flag = 0;
+	}
+*/
+	
 //	printk("[IT7236] %s : Buffer =%d..%d \n",__func__,(int)pucProximityBuffer[0],(int)pucProximityBuffer[1]);
 
 	//TODO : Add your Code here. pucBuffer[] include the data.
@@ -880,22 +962,47 @@ static int __init IT7236_tk_init(void)
 	input_dev->phys = "I2C";
 	input_dev->id.bustype = BUS_I2C;
 	input_dev->id.vendor = 0x0001;
-	input_dev->id.product = 0x7236;
+	input_dev->id.product = 0x0002;
+	input_dev->id.version =  0x0003;
+	
+// for single
 
-	//set_bit(EV_SYN, input_dev->evbit);
-	//set_bit(EV_KEY, input_dev->evbit);
-	__set_bit(EV_ABS, input_dev->evbit);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) | BIT_MASK(EV_SYN);
+
 	__set_bit(ABS_X, input_dev->absbit);
 	__set_bit(ABS_Y, input_dev->absbit);
 
 	__set_bit(EV_SYN, input_dev->evbit);
 	__set_bit(EV_KEY, input_dev->evbit);
 	__set_bit(BTN_TOUCH, input_dev->keybit);
+//	__set_bit(BTN_TOOL_PEN, input_dev->keybit);
+	__set_bit(INPUT_PROP_DIRECT, input_dev->propbit);
+	
+	input_set_abs_params(input_dev, ABS_X, 0, 255, 0, 0);
+	input_set_abs_params(input_dev, ABS_Y, 0, 255, 0, 0);
 
-	input_set_abs_params(input_dev, ABS_X, 0, 60, 0, 0);
 
-	//set_bit(BTN_TOUCH, input_dev->keybit);
-	//set_bit(BTN_2, input_dev->keybit);
+//for mt 
+/*
+	__set_bit(EV_ABS, input_dev->evbit);
+	__set_bit(EV_KEY, input_dev->evbit);
+	__set_bit(EV_REP, input_dev->evbit);
+	__set_bit(EV_SYN, input_dev->evbit);
+	__set_bit(INPUT_PROP_DIRECT, input_dev->propbit);
+	__set_bit(MT_TOOL_FINGER, input_dev->keybit);
+	input_mt_init_slots(input_dev, (1+1), 0);
+	set_bit(ABS_MT_POSITION_X, input_dev->absbit);
+	set_bit(ABS_MT_POSITION_Y, input_dev->absbit);
+	set_bit(ABS_MT_TOUCH_MAJOR, input_dev->absbit);
+	set_bit(ABS_MT_WIDTH_MAJOR, input_dev->absbit);
+	input_set_abs_params(input_dev,ABS_MT_POSITION_X, 0, 255, 0, 0);
+	input_set_abs_params(input_dev,ABS_MT_POSITION_Y, 0, 255, 0, 0);
+	input_set_abs_params(input_dev,ABS_MT_TOUCH_MAJOR, 0, 4, 0, 0);
+	input_set_abs_params(input_dev,ABS_MT_WIDTH_MAJOR, 0, 3, 0, 0);
+*/	
+
+
+	
 	
 	err = input_register_device(input_dev);
 	if(err) {
