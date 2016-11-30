@@ -652,6 +652,7 @@ int vcc_tp_reinit = 0;
 extern struct input_dev *vb_input_dev ;
 int it7236_flag = 0;
 unsigned int touch_value = 0, touch_value1= 0;
+static int proximity_flag = -1;
 static void Read_Point(struct IT7236_tk_data *ts)
 {
 	unsigned char pucSliderBuffer[4];
@@ -738,7 +739,23 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		printk("it7236 release\n");
 		it7236_flag = 0;
 	}
-
+    
+    //proximity
+    if((proximity_flag == -1)&&((int)pucSliderBuffer[2] == 165 ||(int)pucSliderBuffer[3]==90) ){
+        //input_report_key(input_dev,BTN_5,1);
+        //input_sync(input_dev);
+        input_report_key(input_dev,BTN_5,1);
+        input_sync(input_dev);
+        printk("left\n\n");
+        proximity_flag = 1;
+        printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
+    }else if((proximity_flag == 1)&&(int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0){
+        input_report_key(input_dev,BTN_5,0);
+        input_sync(input_dev);
+        printk("realse\n\n");
+        proximity_flag = -1;
+        printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);
+        }
 
 //for mul
 /*
@@ -1000,7 +1017,7 @@ static int __init IT7236_tk_init(void)
 	input_set_abs_params(input_dev,ABS_MT_TOUCH_MAJOR, 0, 4, 0, 0);
 	input_set_abs_params(input_dev,ABS_MT_WIDTH_MAJOR, 0, 3, 0, 0);
 */	
-
+   input_set_capability(input_dev, EV_KEY, BTN_5);	
 
 	
 	
