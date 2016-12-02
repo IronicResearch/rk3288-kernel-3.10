@@ -724,19 +724,28 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		}
 		*/
 	//	if(tmp == 1){
-			input_report_abs(input_dev, ABS_X, (int)pucSliderBuffer[1]*(int)(255/60)); 
+            if ((int)pucSliderBuffer[1] < 8){
+            touch_value = 255;
+            }
+            else if ((int)pucSliderBuffer[1] > 55){
+                touch_value = 0;
+            }else{
+            touch_value = 255 - (int)pucSliderBuffer[1]*(int)(255/60);
+            }
+			input_report_abs(input_dev, ABS_X, touch_value); 
 			input_sync(input_dev);
-			touch_value = (int)pucSliderBuffer[1]*(int)(255/60);//记录上次值
+		//	touch_value = 255 - (int)pucSliderBuffer[1]*(int)(255/60);//记录上次值
 			it7236_flag = 1;
+            //printk("-------------touch_value = %d\n\n\n",touch_value);
 	//	}
-		printk("it7236 press\n");
+	//	printk("it7236 press\n");
 		
 	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
 	//	input_report_key(input_dev, BTN_TOUCH, 0);
 	//	input_sync(input_dev);
 		input_report_abs(input_dev, ABS_Y, touch_value);//避免逻辑问题 释放时报另一个轴
 		input_sync(input_dev);
-		printk("it7236 release\n");
+	//	printk("it7236 release\n");
 		it7236_flag = 0;
 	}
     
@@ -748,13 +757,13 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_sync(input_dev);
         printk("left\n\n");
         proximity_flag = 1;
-        printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
+      //  printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
     }else if((proximity_flag == 1)&&(int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0){
         input_report_key(input_dev,BTN_5,0);
         input_sync(input_dev);
         printk("realse\n\n");
         proximity_flag = -1;
-        printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);
+        //printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);
         }
 
 //for mul
