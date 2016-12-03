@@ -78,7 +78,7 @@ static int vb_switch_parse_dt(struct platform_device *pdev,
 	gpio = of_get_named_gpio_flags(node, "chan_a", 0, &flags);
 	if (gpio_is_valid(gpio)){
 		ddata->switch_desc[0].gpio = gpio;
-		ddata->switch_desc[0].code = REL_WHEEL;
+		ddata->switch_desc[0].code = REL_HWHEEL;
 		ddata->switch_desc[0].lable = "rel_left";
 	} else{
 		ddata->switch_desc[0].gpio = -1;
@@ -88,7 +88,7 @@ static int vb_switch_parse_dt(struct platform_device *pdev,
 	gpio = of_get_named_gpio_flags(node, "chan_b", 0, &flags);
 	if (gpio_is_valid(gpio)){
 		ddata->switch_desc[1].gpio = gpio;
-		ddata->switch_desc[1].code = REL_WHEEL;
+		ddata->switch_desc[1].code = REL_HWHEEL;
 		ddata->switch_desc[1].lable = "rel_right";
 	} else {
 		ddata->switch_desc[1].gpio = -1;
@@ -109,7 +109,7 @@ static int vb_switch_parse_dt(struct platform_device *pdev,
 	gpio = of_get_named_gpio_flags(node, "scrl_a", 0, &flags);
 	if (gpio_is_valid(gpio)){
 		ddata->switch_desc[3].gpio = gpio;
-		ddata->switch_desc[3].code = REL_HWHEEL;
+		ddata->switch_desc[3].code = REL_WHEEL;
 		ddata->switch_desc[3].lable = "rel_up";
 	} else {
 		ddata->switch_desc[3].gpio = -1;
@@ -119,7 +119,7 @@ static int vb_switch_parse_dt(struct platform_device *pdev,
 	gpio = of_get_named_gpio_flags(node, "scrl_b", 0, &flags);
 	if (gpio_is_valid(gpio)){
 		ddata->switch_desc[4].gpio = gpio;
-		ddata->switch_desc[4].code = REL_HWHEEL;
+		ddata->switch_desc[4].code = REL_WHEEL;
 		ddata->switch_desc[4].lable = "rel_down";
 	} else {
 		ddata->switch_desc[4].gpio = -1;
