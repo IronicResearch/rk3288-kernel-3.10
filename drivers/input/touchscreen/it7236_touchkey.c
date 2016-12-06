@@ -419,7 +419,7 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 	return 0;
 }
 
-#if 0
+#if 1
 static u32 get_firmware_ver_cmd(void)
 {
 	char pucBuffer[1];
@@ -461,16 +461,52 @@ static u32 get_firmware_ver_cmd(void)
 	return fw_version;
 }
 #endif
-#if IT7236_FW_AUTO_UPGRADE
-static ssize_t IT7236_upgrade_auto(void)
-{
-	int retry = 3;
-	while(((it7236_upgrade((u8 *)rawDATA,sizeof(rawDATA))) != 0) && (retry > 0)){
-		retry--;
-		msleep(10);
-	}
 
-	return retry;
+u32 GetCurrentFWVersion(void)
+{
+    u16 i,Num;
+    u32  ReadOut_FW_Version;
+    u8 DeviceID[]="IT7236";
+
+    for(i=0,Num=0;i<sizeof(rawDATA);i++)
+    {          
+        if(rawDATA[i] == DeviceID[Num])
+        {
+            Num++;
+        }
+        else
+        {
+            Num = 0;
+        }
+
+        if(Num == (sizeof(DeviceID)-1))
+        {
+            ReadOut_FW_Version =(rawDATA[i+1] << 24) | (rawDATA[i+2] << 16) | (rawDATA[i+3] << 8) | (rawDATA[i+4]);
+            break;
+        }
+    }
+    return  ReadOut_FW_Version;
+}
+
+#if IT7236_FW_AUTO_UPGRADE
+void  IT7236_upgrade_auto(void)
+{
+    u32 Current_FW_Version = 0x0;
+    u32 ReadOut_FW_Version = 0x0;
+    int  result,retry =0;
+
+    Current_FW_Version = GetCurrentFWVersion();
+    ReadOut_FW_Version = get_firmware_ver_cmd();
+   if(ReadOut_FW_Version != Current_FW_Version)
+    {
+        do
+        {
+            result = it7236_upgrade(rawDATA, sizeof(rawDATA));
+            retry++;
+        }
+        while((result== -1)&&(retry<3));
+    }
+
 }
 #endif
 
@@ -750,16 +786,35 @@ static void Read_Point(struct IT7236_tk_data *ts)
 	}
     
     //proximity
-    if((proximity_flag == -1)&&((int)pucSliderBuffer[2] == 165 ||(int)pucSliderBuffer[3]==90) ){
+    if((proximity_flag == -1)&&((int)pucSliderBuffer[2] == 165 &&(int)pucSliderBuffer[3]==0) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
-        input_report_key(input_dev,BTN_5,1);
+        input_report_abs(input_dev, ABS_X, 1);
+		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
+        //input_mt_sync(input_dev);
         input_sync(input_dev);
         printk("left\n\n");
         proximity_flag = 1;
       //  printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
+    }else if((proximity_flag == -1)&&((int)pucSliderBuffer[2] == 0 &&(int)pucSliderBuffer[3]==90) ){
+        //input_report_key(input_dev,BTN_5,1);
+        //input_sync(input_dev);
+        input_report_abs(input_dev, ABS_X, 2);
+		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
+        input_sync(input_dev);
+        printk("right\n\n");
+        proximity_flag = 1;
+    }else if((proximity_flag == -1)&&((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
+        //input_report_key(input_dev,BTN_5,1);
+        //input_sync(input_dev);
+        input_report_abs(input_dev, ABS_X, 3);
+		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
+        input_sync(input_dev);
+        printk("mid\n\n");
+        proximity_flag = 1;
     }else if((proximity_flag == 1)&&(int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0){
-        input_report_key(input_dev,BTN_5,0);
+        input_report_abs(input_dev, ABS_Y, 4);
+		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
         printk("realse\n\n");
         proximity_flag = -1;
@@ -884,7 +939,7 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	#if IT7236_FW_AUTO_UPGRADE
 	IT7236_upgrade_auto();
 	#endif
-//	get_config_ver();
+	get_config_ver();
 
 	return 0;
 
@@ -994,7 +1049,14 @@ static int __init IT7236_tk_init(void)
 // for single
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) | BIT_MASK(EV_SYN);
-
+    input_dev->absbit[0] =   
+						 BIT_MASK(ABS_X) |  
+						 BIT_MASK(ABS_Y) |   
+						 BIT_MASK(ABS_MT_TOUCH_MAJOR) |  
+						 BIT_MASK(ABS_MT_WIDTH_MAJOR) |  
+						 BIT_MASK(ABS_MT_POSITION_X) |  
+						 BIT_MASK(ABS_MT_POSITION_Y) |  
+						 BIT_MASK(ABS_MT_TRACKING_ID);
 	__set_bit(ABS_X, input_dev->absbit);
 	__set_bit(ABS_Y, input_dev->absbit);
 
@@ -1006,7 +1068,8 @@ static int __init IT7236_tk_init(void)
 	
 	input_set_abs_params(input_dev, ABS_X, 0, 255, 0, 0);
 	input_set_abs_params(input_dev, ABS_Y, 0, 255, 0, 0);
-
+	input_set_abs_params(input_dev, ABS_MT_POSITION_X, 0, 255, 0, 0);
+	input_set_abs_params(input_dev, ABS_MT_POSITION_Y, 0, 255, 0, 0);
 
 //for mt 
 /*
