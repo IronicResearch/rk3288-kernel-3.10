@@ -87,12 +87,15 @@ int rk_get_system_battery_capacity(void)
 EXPORT_SYMBOL(rk_get_system_battery_capacity);
 
 #ifdef CONFIG_CHARGER_DISPLAY
-static void add_bootmode_charger_to_cmdline(void)
+static void add_bootmode_charger_to_cmdline(bool charger)
 {
-	char *pmode=" androidboot.mode=charger";
+	char *pmode=" androidboot.start=charger";
 	char *new_command_line = kzalloc(strlen(saved_command_line) + strlen(pmode) + 1, GFP_KERNEL);
 
-	sprintf(new_command_line, "%s%s", saved_command_line, pmode);
+	if(charger)
+		sprintf(new_command_line, "%s%s", saved_command_line, pmode);
+	else
+		sprintf(new_command_line, "%s%s", saved_command_line, " androidboot.start=no");
 	saved_command_line = new_command_line;
 
 	printk("Kernel command line: %s\n", saved_command_line);
@@ -129,11 +132,14 @@ static int  __init start_charge_logo_display(void)
 	{
 		if (((rockchip_boot_mode() == BOOT_MODE_NORMAL) || (rockchip_boot_mode() == BOOT_MODE_CHARGE)) || (val_capacity.intval <= pwr_on_thrsd))
 	    {			
-			add_bootmode_charger_to_cmdline();
+			add_bootmode_charger_to_cmdline(1);
 			printk("power in charge mode %d %d  %d\n\n",rockchip_boot_mode(),val_capacity.intval,pwr_on_thrsd);
+		    printk("----------------charge-mode---------------\n\n");
+            return 0;
 	   }
 	}
 
+	add_bootmode_charger_to_cmdline(0);
 	return 0;
 } 
 
