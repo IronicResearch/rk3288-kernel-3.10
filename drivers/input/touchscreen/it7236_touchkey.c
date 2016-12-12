@@ -36,7 +36,7 @@
 #include "it7236_touchkey.h"
 
 #define IT7236_I2C_NAME "it7236_touchkey"
-#define IT7236_IIC_SPEED 		200*1000
+#define IT7236_IIC_SPEED 		100*1000
 
 static int ite7236_major = 0;	// dynamic major by default
 static int ite7236_minor = 0;
@@ -158,7 +158,7 @@ void WriteCommd(unsigned char Command)
 
 	pucBuffer[0] =0x40;
 	i2cWriteToIt7236(gl_ts->client, 0xF1, pucBuffer, 1);
-	mdelay(200);
+	mdelay(500);
 }
 
 
@@ -234,6 +234,10 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 	i2cWriteToIt7236(gl_ts->client, 0xF0, pucBuffer, 1);
 	pucBuffer[0] = 0x04;
 	i2cWriteToIt7236(gl_ts->client, 0x01, pucBuffer, 1);
+    
+    // close watchdag
+	pucBuffer[0] = 0x00;
+	i2cWriteToIt7236(gl_ts->client, 0x22, pucBuffer, 1);
 
 	// 2. Assert EF enable & reset
 	pucBuffer[0] = 0x10;
@@ -695,7 +699,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+	//printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]*(int)(255/60));
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]);
 
@@ -813,7 +817,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
         printk("mid\n\n");
         proximity_flag = 1;
     }else if((proximity_flag == 1)&&(int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0){
-        input_report_abs(input_dev, ABS_Y, 4);
+        input_report_abs(input_dev, ABS_X, 4);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
         printk("realse\n\n");
@@ -864,15 +868,15 @@ static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 static void it7236_timer_work(struct work_struct *work){
 	
 	Read_Point(gl_ts);
-	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(100));
+	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(66));
 }
 static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct IT7236_tk_data *ts;
 	int ret = 0;
+     
 
-
-	printk("[IT7236] i2c  enter probe\n");
+    printk("[IT7236] i2c  enter probe\n");
 	printk("IT7236 i2c  Driver Version : %s",DRIVER_VERSION);
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
