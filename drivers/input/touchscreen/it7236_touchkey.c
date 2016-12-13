@@ -691,15 +691,15 @@ static int get_config_ver(void)
 int vcc_tp_reinit = 0;
 extern struct input_dev *vb_input_dev ;
 int it7236_flag = 0;
-unsigned int touch_value = 0, touch_value1= 0;
-static int proximity_flag = -1;
+unsigned int touch_value = 0, touch_value1 = 0;
+static int proximity_flag = 1;
 static void Read_Point(struct IT7236_tk_data *ts)
 {
 	unsigned char pucSliderBuffer[4];
 		//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-	//printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+//	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]*(int)(255/60));
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]);
 
@@ -746,82 +746,66 @@ static void Read_Point(struct IT7236_tk_data *ts)
 */
 //for  single
 
-	if((int)pucSliderBuffer[1] != 255){
-	//	input_report_key(input_dev, BTN_TOUCH, 1);
-	/*
-		int tmp = 0;
-		touch_value1 = (int)pucSliderBuffer[1]*(int)(255/60);//记录本次值
-		if (touch_value1>=touch_value){//触摸条不稳定 按在同一个点时值会有一点波动
-			if(touch_value1 - touch_value >= 12)
-				tmp = 1;//波动比较大
-			else
-				tmp = 2;
-		}else{
-			if(touch_value - touch_value1 >= 12)
-				tmp = 1;//波动比较大
-			else
-				tmp = 2;
-		}
-		*/
-	//	if(tmp == 1){
+	if((int)pucSliderBuffer[1] != 255 && touch_value1 != (int)pucSliderBuffer[1] ){
+
             if ((int)pucSliderBuffer[1] < 8){
-            touch_value = 255;
+            touch_value = 254;
             }
             else if ((int)pucSliderBuffer[1] > 55){
                 touch_value = 0;
             }else{
-            touch_value = 255 - (int)pucSliderBuffer[1]*(int)(255/60);
+            touch_value = 254 - (int)pucSliderBuffer[1]*(int)(255/60);
             }
 			input_report_abs(input_dev, ABS_X, touch_value); 
 			input_sync(input_dev);
-		//	touch_value = 255 - (int)pucSliderBuffer[1]*(int)(255/60);//记录上次值
 			it7236_flag = 1;
-            //printk("-------------touch_value = %d\n\n\n",touch_value);
-	//	}
-	//	printk("it7236 press\n");
+			touch_value1 = (int)pucSliderBuffer[1];
+			printk("it7236 press\n");
 		
 	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
 	//	input_report_key(input_dev, BTN_TOUCH, 0);
 	//	input_sync(input_dev);
 		input_report_abs(input_dev, ABS_Y, touch_value);//避免逻辑问题 释放时报另一个轴
 		input_sync(input_dev);
-	//	printk("it7236 release\n");
+		printk("it7236 release\n");
 		it7236_flag = 0;
 	}
     
+	
+	
     //proximity
-    if((proximity_flag == -1)&&((int)pucSliderBuffer[2] == 165 &&(int)pucSliderBuffer[3]==0) ){
+    if(proximity_flag != 301 && ((int)pucSliderBuffer[2] == 165 &&(int)pucSliderBuffer[3]==0) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
-        input_report_abs(input_dev, ABS_X, 1);
+        input_report_abs(input_dev, ABS_MT_POSITION_Y, 301);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         //input_mt_sync(input_dev);
         input_sync(input_dev);
         printk("left\n\n");
-        proximity_flag = 1;
+        proximity_flag = 301;
       //  printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
-    }else if((proximity_flag == -1)&&((int)pucSliderBuffer[2] == 0 &&(int)pucSliderBuffer[3]==90) ){
+    }else if( proximity_flag != 302 && ((int)pucSliderBuffer[2] == 0 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
-        input_report_abs(input_dev, ABS_X, 2);
+        input_report_abs(input_dev, ABS_MT_POSITION_Y, 302);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
         printk("right\n\n");
-        proximity_flag = 1;
-    }else if((proximity_flag == -1)&&((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
+        proximity_flag = 302;
+    }else if(proximity_flag != 303 && ((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
-        input_report_abs(input_dev, ABS_X, 3);
+        input_report_abs(input_dev, ABS_MT_POSITION_Y, 303);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
         printk("mid\n\n");
-        proximity_flag = 1;
-    }else if((proximity_flag == 1)&&(int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0){
-        input_report_abs(input_dev, ABS_X, 4);
+        proximity_flag = 303;
+    }else if(proximity_flag != 300 && proximity_flag != 1 && ((int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0)){
+        input_report_abs(input_dev, ABS_MT_POSITION_Y, 300);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
         printk("realse\n\n");
-        proximity_flag = -1;
+        proximity_flag = 300;
         //printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);
         }
 
@@ -868,7 +852,7 @@ static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 static void it7236_timer_work(struct work_struct *work){
 	
 	Read_Point(gl_ts);
-	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(66));
+	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(10));
 }
 static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
