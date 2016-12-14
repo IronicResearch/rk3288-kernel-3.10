@@ -206,6 +206,7 @@ static void input_repeat_key(unsigned long data)
 #define INPUT_FLUSH		8
 #define INPUT_PASS_TO_ALL	(INPUT_PASS_TO_HANDLERS | INPUT_PASS_TO_DEVICE)
 
+extern int it7236_input_flag;
 static int input_handle_abs_event(struct input_dev *dev,
 				  unsigned int code, int *pval)
 {
@@ -241,9 +242,10 @@ static int input_handle_abs_event(struct input_dev *dev,
 	if (pold) {
 		*pval = input_defuzz_abs_event(*pval, *pold,
 						dev->absinfo[code].fuzz);
-		if (*pold == *pval)
-			return INPUT_IGNORE_EVENT;
-
+		if (*pold == *pval){
+			if(it7236_input_flag != 7236)
+				return INPUT_IGNORE_EVENT;
+		}
 		*pold = *pval;
 	}
 

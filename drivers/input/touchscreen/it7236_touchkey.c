@@ -688,10 +688,11 @@ static int get_config_ver(void)
 }
 #endif 
 
-int vcc_tp_reinit = 0;
+static int vcc_tp_reinit = 0;
 extern struct input_dev *vb_input_dev ;
-int it7236_flag = 0;
-unsigned int touch_value = 0, touch_value1 = 0;
+static int it7236_flag = 0;
+static unsigned int touch_value = 0, touch_value1 = 0,touch_swp = 0;
+int it7236_input_flag = 0;
 static int proximity_flag = 1;
 static void Read_Point(struct IT7236_tk_data *ts)
 {
@@ -745,22 +746,36 @@ static void Read_Point(struct IT7236_tk_data *ts)
 	}
 */
 //for  single
+//&& touch_value1 != (int)pucSliderBuffer[1]
+	if((int)pucSliderBuffer[1] != 255  ){
 
-	if((int)pucSliderBuffer[1] != 255 && touch_value1 != (int)pucSliderBuffer[1] ){
-
-            if ((int)pucSliderBuffer[1] < 8){
-            touch_value = 254;
-            }
-            else if ((int)pucSliderBuffer[1] > 55){
-                touch_value = 0;
-            }else{
-            touch_value = 254 - (int)pucSliderBuffer[1]*(int)(255/60);
-            }
-			input_report_abs(input_dev, ABS_X, touch_value); 
-			input_sync(input_dev);
+			if ((int)pucSliderBuffer[1] == 60)
+				touch_value = 0; 
+			else
+				touch_value = 254 - ((int)pucSliderBuffer[1]*17)/4;//(255.0/60.0) = 4.25
+			
+			
+			
+			
+			if(it7236_flag == 2){ //重新按下
+				if(touch_value1 == (int)pucSliderBuffer[1]){//采用EV_ABS方式传送，input机制会过滤掉相同的值，所以会出现丢值的现象 
+					it7236_input_flag = 7236;
+				}
+				
+				input_report_abs(input_dev, ABS_X, touch_value); 
+				input_sync(input_dev);
+			//	printk("it7236 press %d\n",touch_value);
+			}else if(touch_value1 != (int)pucSliderBuffer[1]){//移动中
+				input_report_abs(input_dev, ABS_X, touch_value); 
+				input_sync(input_dev);
+			//	printk("it7236 press move%d\n",touch_value);
+			}
+				
+			
 			it7236_flag = 1;
 			touch_value1 = (int)pucSliderBuffer[1];
-			printk("it7236 press\n");
+		//	touch_swp = touch_value;
+			
 		
 	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
 	//	input_report_key(input_dev, BTN_TOUCH, 0);
@@ -768,7 +783,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		input_report_abs(input_dev, ABS_Y, touch_value);//避免逻辑问题 释放时报另一个轴
 		input_sync(input_dev);
 		printk("it7236 release\n");
-		it7236_flag = 0;
+		it7236_flag = 2;
 	}
     
 	
@@ -781,7 +796,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         //input_mt_sync(input_dev);
         input_sync(input_dev);
-        printk("left\n\n");
+    //    printk("left\n\n");
         proximity_flag = 301;
       //  printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
     }else if( proximity_flag != 302 && ((int)pucSliderBuffer[2] == 0 &&(int)pucSliderBuffer[3]==90) ){
@@ -790,7 +805,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 302);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-        printk("right\n\n");
+     //   printk("right\n\n");
         proximity_flag = 302;
     }else if(proximity_flag != 303 && ((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
@@ -798,13 +813,13 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 303);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-        printk("mid\n\n");
+    //    printk("mid\n\n");
         proximity_flag = 303;
     }else if(proximity_flag != 300 && proximity_flag != 1 && ((int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0)){
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 300);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-        printk("realse\n\n");
+     //   printk("realse\n\n");
         proximity_flag = 300;
         //printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);
         }
@@ -944,6 +959,19 @@ static int IT7236_tk_remove(struct i2c_client *client) {
 }
 
 
+static int IT7236_tk_suspend(struct i2c_client *i2c_client, pm_message_t state) {
+	printk("%s susupend \n",__func__);
+	cancel_delayed_work(&it7236_delay_work);
+	return 0;
+}
+
+
+static int IT7236_tk_resume(struct i2c_client *i2c_client) {
+	printk("%s resume \n",__func__);
+	queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(100));
+	return 0;
+}
+
 
 
 static const struct i2c_device_id IT7236_tk_id[] = {
@@ -963,8 +991,12 @@ static struct i2c_driver IT7236_tk_driver = {
 		.probe = IT7236_tk_probe,
 		.remove = IT7236_tk_remove,
 		.id_table = IT7236_tk_id,
+		.suspend  =  IT7236_tk_suspend,
+		.resume  = 	IT7236_tk_resume,
 		.driver = {
-		.name = IT7236_I2C_NAME,
+		//	.suspend  =  IT7236_tk_suspend,
+		//	.resume  = 	IT7236_tk_resume,
+			.name = IT7236_I2C_NAME,
 		.of_match_table = it7236_match_table,
 		},
 };
