@@ -377,14 +377,14 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 	}
 	*/
 	if ((i == 3 || i ==4) && vr_jiffy1end != 0){ 
-		if(jiffies_to_msecs(jiffies-vr_jiffy1end) < 50 )//降低上报速度
+		if(jiffies_to_msecs(jiffies-vr_jiffy1end) < 10 )//降低上报速度
 			return IRQ_HANDLED;
 		
 	}
 	
 	
 	if ((i == 0 || i == 1) && vr_jiffy2end != 0){ //降低上报速度
-		if(jiffies_to_msecs(jiffies-vr_jiffy2end) < 50 )
+		if(jiffies_to_msecs(jiffies-vr_jiffy2end) < 10 )
 			return IRQ_HANDLED;
 	}
 	

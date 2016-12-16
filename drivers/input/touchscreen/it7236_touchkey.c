@@ -29,6 +29,8 @@
 #define IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS	0x02  // Change the address to read others RAM data
 #define DRIVER_VERSION	"1.0.0"
 
+#define IT7236_USE_IRQ    1
+
 #if IT7236_FW_AUTO_UPGRADE
 #include "IT7236_FW.h"
 #endif
@@ -85,6 +87,9 @@ static int i2cReadFromIt7236(struct i2c_client *client, unsigned char bufferInde
 	return ret;
 }
 
+
+static int it7236_upgrade_fail = 0;
+
 static int i2cWriteToIt7236(struct i2c_client *client, unsigned char bufferIndex, unsigned char const dataBuffer[], unsigned short dataLength)
 {
 	unsigned char buffer4Write[256];
@@ -107,8 +112,10 @@ static int i2cWriteToIt7236(struct i2c_client *client, unsigned char bufferIndex
 			retry--;
 		} while((ret != 1) && (retry > 0));
 
-		if(ret != 1)
+		if(ret != 1){
 			printk("%s : i2c_transfer error\n", __func__);
+			it7236_upgrade_fail = 1;
+		}
 		return ret;
 	}
 	else {
@@ -434,6 +441,8 @@ static u32 get_firmware_ver_cmd(void)
 	//Wakeup
 	pucBuffer[0] = 0x55; 
 	i2cWriteToIt7236(gl_ts->client, 0xFB, pucBuffer, 1); 
+	if (it7236_upgrade_fail)
+		return 0;
 	mdelay(1);
 	waitCommandDone();
 	pucBuffer[0] = 0x00;
@@ -501,6 +510,8 @@ void  IT7236_upgrade_auto(void)
 
     Current_FW_Version = GetCurrentFWVersion();
     ReadOut_FW_Version = get_firmware_ver_cmd();
+	if (it7236_upgrade_fail)
+		return 0;
    if(ReadOut_FW_Version != Current_FW_Version)
     {
         do
@@ -688,63 +699,26 @@ static int get_config_ver(void)
 }
 #endif 
 
-static int vcc_tp_reinit = 0;
-extern struct input_dev *vb_input_dev ;
+
 static int it7236_flag = 0;
+static int it7236_slider_flag = 0;
+static int it7236_promixy_flag = 0;
 static unsigned int touch_value = 0, touch_value1 = 0,touch_swp = 0;
 int it7236_input_flag = 0;
 static int proximity_flag = 1;
+int int_flag = 0; 
+unsigned long int it7236_jiffy1 = 0;
 static void Read_Point(struct IT7236_tk_data *ts)
 {
 	unsigned char pucSliderBuffer[4];
 		//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-//	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]*(int)(255/60));
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]);
 
-	// for key_mouse	
-/*
-	touch_value1 = (int)pucSliderBuffer[1];
-	if((int)pucSliderBuffer[1] != 255  && touch_value1 != touch_value ){
-	//	input_report_abs(vb_input_dev, ABS_X, (int)pucSliderBuffer[1]*(int)(255/60));  
-		
-		input_report_key(vb_input_dev,BTN_5,(int)pucSliderBuffer[1]*(int)(255/60));
-		input_sync(vb_input_dev);
-		touch_value = (int)pucSliderBuffer[1];
-		printk("it7236 press\n");
-		it7236_flag = 1;
-	}
-	
-	
-	else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
-	//	input_report_rel(dev, REL_X, (int)pucSliderBuffer[1]*(int)(255/60)); 
-	//	input_sync(input_dev);
-		touch_value = (int)pucSliderBuffer[1];
-		input_report_key(vb_input_dev,BTN_5,5);
-		input_sync(vb_input_dev);
-		printk("it7236 release\n");
-		it7236_flag = 0;
-	}
-*/
-	
- // for vb_switch	
- 
- 
- /*
-	if((int)pucSliderBuffer[1] != 255){
-		input_report_key(vb_input_dev,BTN_LEFT,1); 
-		input_sync(vb_input_dev);
-		printk("it7236 press\n");
-		it7236_flag = 1;
-	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
-		input_report_key(vb_input_dev,BTN_LEFT,0); 
-		input_sync(vb_input_dev);
-		printk("it7236 release\n");
-		it7236_flag = 0;
-	}
-*/
+
 //for  single
 //&& touch_value1 != (int)pucSliderBuffer[1]
 	if((int)pucSliderBuffer[1] != 255  ){
@@ -771,7 +745,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 			//	printk("it7236 press move%d\n",touch_value);
 			}
 				
-			
+			it7236_slider_flag = 1;
 			it7236_flag = 1;
 			touch_value1 = (int)pucSliderBuffer[1];
 		//	touch_swp = touch_value;
@@ -784,6 +758,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		input_sync(input_dev);
 		printk("it7236 release\n");
 		it7236_flag = 2;
+		it7236_slider_flag = 2;//离开滑条
 	}
     
 	
@@ -798,6 +773,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_sync(input_dev);
     //    printk("left\n\n");
         proximity_flag = 301;
+		it7236_promixy_flag = 1;
       //  printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
     }else if( proximity_flag != 302 && ((int)pucSliderBuffer[2] == 0 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
@@ -807,6 +783,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_sync(input_dev);
      //   printk("right\n\n");
         proximity_flag = 302;
+		it7236_promixy_flag = 1;
     }else if(proximity_flag != 303 && ((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
@@ -815,51 +792,33 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_sync(input_dev);
     //    printk("mid\n\n");
         proximity_flag = 303;
+		it7236_promixy_flag = 1;
     }else if(proximity_flag != 300 && proximity_flag != 1 && ((int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0)){
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 300);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-     //   printk("realse\n\n");
+        printk("realse\n\n");
         proximity_flag = 300;
+		it7236_promixy_flag = 2;//离开距感
         //printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);
         }
 
-//for mul
-/*
-	if((int)pucSliderBuffer[1] != 255){
-		input_mt_slot(input_dev, 0);
-		//input_report_abs(input_dev, ABS_MT_TRACKING_ID, 0);
-		input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, true);
-		input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, 3);
-		input_report_abs(input_dev, ABS_MT_POSITION_X, (int)pucSliderBuffer[1]*(int)(255/60));
-		input_report_abs(input_dev, ABS_MT_POSITION_Y, (int)pucSliderBuffer[1]*(int)(255/60));
-		input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, 1);
-		//input_mt_sync(input_dev);
-		input_sync(input_dev);
-		printk("it7236 press\n");
-		it7236_flag = 1;
-	}else if(((int)pucSliderBuffer[1] == 255) && (it7236_flag == 1)){
-			input_mt_slot(input_dev, 0);
-		//	input_report_abs(input_dev, ABS_MT_TRACKING_ID, -1);
-			input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, false);
-		printk("it7236 release\n");
-		it7236_flag = 0;
-	}
-*/
 	
-//	printk("[IT7236] %s : Buffer =%d..%d \n",__func__,(int)pucProximityBuffer[0],(int)pucProximityBuffer[1]);
-
-	//TODO : Add your Code here. pucBuffer[] include the data.
-
-//	enable_irq(gl_ts->client->irq);
-//	input_sync(input_dev);
+	printk("it7236_slider_flag %d,...it7236_promixy_flag %d \n",it7236_slider_flag,it7236_promixy_flag);
 
 }
 
+
+
 static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 {
-	disable_irq_nosync(gl_ts->client->irq);
-	Read_Point(gl_ts);
+//	printk("IT7236 int \n");
+	disable_irq_nosync(gl_ts->client->irq); //禁止中断 开始轮循
+//	it7236_slider_flag = it7236_promixy_flag = 1; //滑条或距感触发中断
+	
+//	it7236_jiffy1 = jiffies;//记录中断发生的时间
+	//Read_Point(gl_ts);
+	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(1)); //调用轮循方法
 //	enable_irq(gl_ts->client->irq);
 	return IRQ_HANDLED;
 }
@@ -867,7 +826,12 @@ static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 static void it7236_timer_work(struct work_struct *work){
 	
 	Read_Point(gl_ts);
-	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(10));
+	if (it7236_promixy_flag  == 1  || it7236_slider_flag == 1){ //未离开距感 继续轮循
+		queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(10));
+	}else{ //离开距感 使能中断
+		//it7236_slider_flag = it7236_promixy_flag = 0;
+		enable_irq(gl_ts->client->irq);
+	}
 }
 static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -901,40 +865,10 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	ts->early_suspend.resume = IT7236_tk_late_resume;
 	register_early_suspend(&ts->early_suspend);
 #endif
-//for poll
-
-	IT7236_wq = create_workqueue("IT7236_wq");
-
-	if (!IT7236_wq)
-		goto err_check_functionality_failed;
-
-	INIT_DELAYED_WORK(&it7236_delay_work, it7236_timer_work);
-	
-	queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(5000));
 
 
- 	// for int
-	/*
-	struct device_node *np = client->dev.of_node;
-	unsigned long irq_flags;
-	ts->irq_gpio = of_get_named_gpio_flags(np, "irq-gpio", 0, (enum of_gpio_flags *)&irq_flags);
-	gl_ts->client->irq = gpio_to_irq(ts->irq_gpio);
-	if (ts->irq_gpio) {
-		printk("[IT7236] : irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
-		ret = request_irq(gl_ts->client->irq,
-				   IT7236_tk_work_func,IRQF_TRIGGER_FALLING,
-				   IT7236_I2C_NAME, ts);
-		if (ret == 0){
-			ts->use_irq = 1;
-		}
-		else {
-			dev_err(&client->dev, "[IT7236] : Request IRQ Failed\n");
-			goto err_request_irq;  
-		}
-	}else{
-		printk("[IT7236] : FAIL irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
-	}
-*/	
+
+
 
 
 
@@ -942,7 +876,55 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	#if IT7236_FW_AUTO_UPGRADE
 	IT7236_upgrade_auto();
 	#endif
+	if (it7236_upgrade_fail)
+		return 0;
 	get_config_ver();
+
+
+	IT7236_wq = create_workqueue("IT7236_wq");
+	if (!IT7236_wq)
+		goto err_check_functionality_failed;
+	
+	INIT_DELAYED_WORK(&it7236_delay_work, it7236_timer_work);
+	
+#if !IT7236_USE_IRQ
+
+	//for poll
+	
+	//	IT7236_wq = create_workqueue("IT7236_wq");
+	
+	//	if (!IT7236_wq)
+	//		goto err_check_functionality_failed;
+	
+	//	INIT_DELAYED_WORK(&it7236_delay_work, it7236_timer_work);
+		
+		queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(5000));
+
+
+#else
+		// for int
+		
+		struct device_node *np = client->dev.of_node;
+		unsigned long irq_flags;
+		ts->irq_gpio = of_get_named_gpio_flags(np, "irq-gpio", 0, (enum of_gpio_flags *)&irq_flags);
+		gl_ts->client->irq = gpio_to_irq(ts->irq_gpio);
+		if (ts->irq_gpio) {
+			printk("[IT7236] : irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
+			ret = request_irq(gl_ts->client->irq,
+					   IT7236_tk_work_func,IRQF_TRIGGER_LOW /* || IRQF_TRIGGER_RISING*/,
+					   IT7236_I2C_NAME, ts);
+			if (ret == 0){
+				ts->use_irq = 1;
+			}
+			else {
+				dev_err(&client->dev, "[IT7236] : Request IRQ Failed\n");
+				goto err_request_irq;  
+			}
+		}else{
+			printk("[IT7236] : FAIL irq = %d , gpio = %d\n",gpio_to_irq(ts->irq_gpio), ts->irq_gpio);
+		}
+	
+#endif
 
 	return 0;
 
@@ -961,14 +943,18 @@ static int IT7236_tk_remove(struct i2c_client *client) {
 
 static int IT7236_tk_suspend(struct i2c_client *i2c_client, pm_message_t state) {
 	printk("%s susupend \n",__func__);
+	#if !IT7236_USE_IRQ
 	cancel_delayed_work(&it7236_delay_work);
+	#endif
 	return 0;
 }
 
 
 static int IT7236_tk_resume(struct i2c_client *i2c_client) {
 	printk("%s resume \n",__func__);
+	#if !IT7236_USE_IRQ
 	queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(100));
+	#endif
 	return 0;
 }
 
