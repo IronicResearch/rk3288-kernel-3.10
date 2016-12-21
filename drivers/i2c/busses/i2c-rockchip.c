@@ -725,12 +725,16 @@ static int rockchip_i2c_doxfer(struct rockchip_i2c *i2c,
 
 	i2c_writel(I2C_IPD_ALL_CLEAN, i2c->regs + I2C_IPD);
 	rockchip_i2c_disable_irq(i2c);
-	rockchip_i2c_disable(i2c);
 	spin_unlock_irqrestore(&i2c->lock, flags);
 
-	if (error == -EAGAIN)
-		i2c_dbg(i2c->dev, "No ack(complete_what: 0x%x), Maybe slave(addr: 0x%04x) not exist or abnormal power-on\n",
-			i2c->complete_what, i2c->addr);
+  if (error == -EAGAIN){
+    i2c_dbg(i2c->dev, "No ack(complete_what: 0x%x), Maybe slave(addr: 0x%04x) not exist or abnormal power-on\n",
+      i2c->complete_what, i2c->addr);
+    rockchip_i2c_send_stop(i2c);
+    msleep(5);
+  }
+
+  rockchip_i2c_disable(i2c);
 
 	return error;
 }

@@ -119,63 +119,71 @@ static int cm3218_read(struct i2c_client *client, u8 reg)
 }
 
 /****************operate according to sensor chip:start************/
+static int cm3218_read_lux(struct i2c_client *client, int *lux)
+{
+	int lux_data;
+
+	lux_data = cm3218_read(client, CM3218_REG_ADDR_ALS);
+	if (lux_data < 0) {
+		dev_err(&client->dev, "Error in reading Lux DATA\n");
+		return lux_data;
+	}
+
+	dev_vdbg(&client->dev, "lux = %u\n", lux_data);
+
+	if (lux_data < 0)
+		return lux_data;
+
+	*lux  = lux_data * LENSFACTOR;
+	*lux /= 1000;
+
+	return 0;
+}
 
 static int sensor_active(struct i2c_client *client, int enable, int rate)
 {
-	struct sensor_private_data *sensor =
-	    (struct sensor_private_data *) i2c_get_clientdata(client);	
-	int result = 0;
-	int status = 0;
-	
-	printk("cm3218 %s\n\n\n",__func__);
-	sensor->client->addr = sensor->ops->ctrl_reg;	
-	sensor->ops->ctrl_data = cm3218_read(client,sensor->client->addr);
-	
-	//register setting according to chip datasheet		
-	if(!enable)
-	{	
-		status = CM3218_CMD_ALS_SD;	//cm3218	
-		sensor->ops->ctrl_data |= status;	
-	}
-	else
-	{
-		status = ~CM3218_CMD_ALS_SD;	//cm3218
-		sensor->ops->ctrl_data &= status;
+	int status;
+
+	if (!enable) {	
+		status = cm3218_write(client, CM3218_REG_ADDR_CMD,0x0001);
+	} else {
+		status = cm3218_write(client, CM3218_REG_ADDR_CMD,0x0000);
 	}
 
-	DBG("%s:reg=0x%x,reg_ctrl=0x%x,enable=%d\n",__func__,sensor->ops->ctrl_reg, sensor->ops->ctrl_data, enable);
-	result = cm3218_write(client,sensor->client->addr, sensor->ops->ctrl_data);
-	if(result)
+	if (status)
 		printk("%s:fail to active sensor\n",__func__);
-	
-	return result;
 
+	return status;
 }
 
-
+/*
+ * cm3218 device initialization.
+ */
 static int sensor_init(struct i2c_client *client)
 {	
-	printk("cm3218 %s\n\n\n",__func__);
 	int status, i;
 	struct sensor_private_data *sensor =
 	    (struct sensor_private_data *) i2c_get_clientdata(client);
 
 	for (i = 0; i < 5; i++) {
-		status = cm3218_write(client, CM3218_REG_ADDR_CMD,
-				CM3218_CMD_ALS_SD);
+        /* shut down */
+		status = cm3218_write(client, CM3218_REG_ADDR_CMD, CM3218_CMD_ALS_SD);
 		if (status >= 0)
 			break;
+        /* Clear interrupt */
 		cm3218_read_ara(client);
 	}
 
+    /* power on (1T, HS, interrupt disable) */
 	status = cm3218_write(client, CM3218_REG_ADDR_CMD, CM3218_DEFAULT_CMD);
 	if (status < 0) {
 		dev_err(&client->dev, "Init CM3218 CMD fails\n");
 		return status;
 	}
 
-	if(sensor->pdata->irq_enable)
-	{
+    /* enable interrupt */
+	if(sensor->pdata->irq_enable){
+
 		status = cm3218_write(client, CM3218_REG_ADDR_CMD, CM3218_DEFAULT_CMD | CM3218_CMD_ALS_INT_EN);
 		if (status < 0) {
 			dev_err(&client->dev, "Init CM3218 CMD fails\n");
@@ -183,9 +191,7 @@ static int sensor_init(struct i2c_client *client)
 		}
 	}
 
-	/* Clean interrupt status */
-	cm3218_read(client, CM3218_REG_ADDR_STATUS);
-	
+
 	return status;
 }
 
@@ -222,29 +228,11 @@ static int light_report_value(struct input_dev *input, int data)
 report:
 	input_report_abs(input, ABS_MISC, index);
 	input_sync(input);
-
+    printk("----------------%d\n",index);
 	return index;
 }
 
-static int cm3218_read_lux(struct i2c_client *client, int *lux)
-{
-	int lux_data;
 
-	lux_data = cm3218_read(client, CM3218_REG_ADDR_ALS);
-	if (lux_data < 0) {
-		dev_err(&client->dev, "Error in reading Lux DATA\n");
-		return lux_data;
-	}
-
-	dev_vdbg(&client->dev, "lux = %u\n", lux_data);
-
-	if (lux_data < 0)
-		return lux_data;
-
-	*lux  = lux_data * LENSFACTOR;
-	*lux /= 1000;
-	return 0;
-}
 
 static int sensor_report_value(struct i2c_client *client)
 {
@@ -256,14 +244,14 @@ static int sensor_report_value(struct i2c_client *client)
 	cm3218_read_lux(client,&result);
 	
 	index = light_report_value(sensor->input_dev, result);
+
 	DBG("%s:%s result=0x%x,index=%d\n",__func__,sensor->ops->name, result,index);
 	
-	if((sensor->pdata->irq_enable)&& (sensor->ops->int_status_reg >= 0))	//read sensor intterupt status register
-	{
-		
+    /* read sensor intterupt status register */
+	if((sensor->pdata->irq_enable)&& (sensor->ops->int_status_reg >= 0)){
+
 		result= sensor_read_reg(client, sensor->ops->int_status_reg);
-		if(result)
-		{
+		if(result){
 			printk("%s:fail to clear sensor int status,ret=0x%x\n",__func__,result);
 		}
 	}
@@ -274,17 +262,17 @@ static int sensor_report_value(struct i2c_client *client)
 
 struct sensor_operate light_cm3218_ops = {
 	.name				= "cm3218",
-	.type				= SENSOR_TYPE_LIGHT,	//sensor type and it should be correct
-	.id_i2c				= LIGHT_ID_CM3218,	//i2c id number
-	.read_reg			= CM3218_REG_ADDR_ALS,	//read data
-	.read_len			= 2,			//data length
-	.id_reg				= SENSOR_UNKNOW_DATA,	//read device id from this register
-	.id_data 			= SENSOR_UNKNOW_DATA,	//device id
-	.precision			= 16,			//8 bits
-	.ctrl_reg 			= CM3218_REG_ADDR_CMD,	//enable or disable 
-	.int_status_reg 		= CM3218_REG_ADDR_STATUS,	//intterupt status register
-	.range				= {0,65535},		//range
-	.brightness                                        ={10,255},                          // brightness
+	.type				= SENSOR_TYPE_LIGHT, /* sensor type and it should be correct */
+	.id_i2c				= LIGHT_ID_CM3218, /* i2c id number */
+	.read_reg			= CM3218_REG_ADDR_ALS, /* read data */
+	.read_len			= 2, /* data length */
+	.id_reg				= SENSOR_UNKNOW_DATA, /* read device id from this register */
+	.id_data 			= SENSOR_UNKNOW_DATA, /* device id */
+	.precision			= 16, /* 8 bits */
+	.ctrl_reg 			= CM3218_REG_ADDR_CMD, /* enable or disable */
+	.int_status_reg 		= SENSOR_UNKNOW_DATA, /* intterupt status register */
+	.range				= {0,65535}, /* range */
+	.brightness         ={10,255}, /* brightness */
 	.trig				= SENSOR_UNKNOW_DATA,		
 	.active				= sensor_active,	
 	.init				= sensor_init,
@@ -293,7 +281,7 @@ struct sensor_operate light_cm3218_ops = {
 
 /****************operate according to sensor chip:end************/
 
-//function name should not be changed
+/* function name should not be changed */
 static struct sensor_operate *light_get_ops(void)
 {
 	return &light_cm3218_ops;
@@ -319,5 +307,3 @@ static void __exit light_cm3218_exit(void)
 
 module_init(light_cm3218_init);
 module_exit(light_cm3218_exit);
-
-
