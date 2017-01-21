@@ -437,7 +437,7 @@ static int classd_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_SPK_MIXER_REG26, regv1);
 		snd_soc_write(w->codec, ES8396_SPK_MIXER_VOL_REG28, 0x33);
 
-		snd_soc_write(w->codec, ES8396_SPK_CTRL_SRC_REG3A, 0xA9);
+		snd_soc_write(w->codec, ES8396_SPK_CTRL_SRC_REG3A, 0x33);//0xA9
 		/*L&R DAC Vol=-6db */
 		snd_soc_write(w->codec, ES8396_DAC_LDAC_VOL_REG6A, 0x00);
 		snd_soc_write(w->codec, ES8396_DAC_RDAC_VOL_REG6B, 0x00);
