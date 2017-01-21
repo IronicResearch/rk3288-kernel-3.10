@@ -1118,6 +1118,8 @@ rpm: include/config/kernel.release FORCE
 # ---------------------------------------------------------------------------
 
 boards := $(wildcard $(srctree)/arch/$(SRCARCH)/configs/rk*_defconfig)
+boards += $(wildcard $(srctree)/arch/$(SRCARCH)/configs/tab*_defconfig)
+boards += $(wildcard $(srctree)/arch/$(SRCARCH)/configs/dpf*_defconfig)
 boards := $(notdir $(boards))
 board-dirs := $(dir $(wildcard $(srctree)/arch/$(SRCARCH)/configs/*/*_defconfig))
 board-dirs := $(sort $(notdir $(board-dirs:/=)))

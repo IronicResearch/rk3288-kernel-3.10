@@ -36,7 +36,8 @@
 #define INVALID_GPIO -1
 
 static struct snd_soc_codec *tron_codec;
-
+static int es8396_set_bias_level(struct snd_soc_codec *codec,
+				 enum snd_soc_bias_level level);
 /*
  * ES8396 register cache
  */
@@ -173,12 +174,12 @@ static struct reg_default es8396_reg_defaults[] = {
 };
 
 static u8 es8396_equalizer_lpf_bt_incall[] = {
-	0x6C, 0x1F, 0x43, 0x03, 0x9F, 0xE7, 0x3B, 0x22, 0x6C, 0x1F, 0x43, 0x03,
-	0x8F, 0xA5, 0x33, 0x03, 0xFF, 0xB9, 0x65, 0x08,
-	0xFF, 0x3D, 0x86, 0x0A, 0xFF, 0xB9, 0x75, 0x08, 0xFF, 0x3D, 0x86, 0x0A,
-	0xE8, 0x96, 0x19, 0x00, 0x8E, 0x23, 0x5B, 0x23,
-	0x6C, 0x1F, 0x43, 0x03, 0x9F, 0xE7, 0x3B, 0x22, 0x6C, 0x1F, 0x43, 0x03,
-	0x8F, 0xA5, 0x33, 0x03, 0xFF, 0xB9, 0x65, 0x08,
+0x4C, 0x61, 0x53, 0x02, 0x6D, 0x23, 0x43, 0x02, 0x4C, 0x61, 0x53, 0x02, 
+0x7D, 0x61, 0x4B, 0x23, 0x7C, 0xE7, 0x53, 0x29, 
+0xAF, 0xA3, 0x53, 0x04, 0x8D, 0x1F, 0x43, 0x02, 0xAF, 0xA3, 0x53, 0x04, 
+0xFF, 0xFD, 0xF7, 0x1F, 0x8E, 0x2F, 0x5B, 0x27, 
+0x4C, 0x61, 0x53, 0x02, 0x6D, 0x23, 0x43, 0x02, 0x4C, 0x61, 0x53, 0x02, 
+0x7D, 0x61, 0x4B, 0x23, 0x7C, 0xE7, 0x53, 0x29, 
 };
 
 struct sp_config {
@@ -767,6 +768,8 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMD:
 		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
 			 __func__, __LINE__);
+		snd_soc_update_bits(w->codec, ES8396_SDP1_OUT_FMT_REG20, 0x40,
+				    0x40);
 		//snd_soc_write(w->codec, 0x20, 0x40);	/* MUTE SDP1 OUT */
 		break;
 	default:
@@ -796,8 +799,14 @@ static int music_play_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, 0x67, 0x00);
 		break;
 	default:
-		printk("Enter into %s  %d, event = others\n", __func__,
-			 __LINE__);
+		case SND_SOC_DAPM_PRE_PMD:
+		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
+			 __func__, __LINE__);
+		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPO */
+		snd_soc_update_bits(w->codec, ES8396_SDP1_IN_FMT_REG1F,
+				    0x40, 0x40);
+		snd_soc_update_bits(w->codec, ES8396_SDP1_IN_FMT_REG1F,
+				    0x40, 0x40);
 		break;
 	}
 	return 0;
@@ -819,23 +828,25 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		printk("Enter into %s  %d, event = SND_SOC_DAPM_POST_PMU\n",
 			 __func__, __LINE__);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPIN */
-		snd_soc_update_bits(w->codec, ES8396_SDP2_IN_FMT_REG22,
-				    0x3F, 0x13);
+		//snd_soc_update_bits(w->codec, ES8396_SDP2_IN_FMT_REG22, 0x3F, 0x0b);
+		snd_soc_write(w->codec, ES8396_SDP2_IN_FMT_REG22,0x0b);
 		/* //DSP-B, 1st SCLK after LRCK edge, I2S2 SDPO */
-		snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23,
-				    0x3F, 0x33);
+		snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23, 0x3F, 0x33);
+/*
 		snd_soc_write(w->codec, 0x8, 0x0f);
 		snd_soc_write(w->codec, 0xd, 0x00);
-		snd_soc_write(w->codec, 0x9, 0x04);
-		snd_soc_write(w->codec, 0x18, 0x51);	/* Enable HPOUT */
-		snd_soc_write(w->codec, 0x19, 0x51);	/* Enable HPOUT */
-		snd_soc_write(w->codec, 0x1A, 0x40);	/* Enable HPOUT */
+		snd_soc_write(w->codec, 0x9, 0x04);*/
+		snd_soc_write(w->codec, 0x18, 0x11);	/* Enable HPOUT */
+		snd_soc_write(w->codec, 0x19, 0x11);	/* Enable HPOUT */
+		snd_soc_write(w->codec, 0x1A, 0x02);	/* Enable HPOUT */
+		snd_soc_write(w->codec, 0x1B, 0x11);
+		snd_soc_write(w->codec, 0x1C, 0x22);
+		/*
 		snd_soc_write(w->codec, 0x67, 0x0d);
-		snd_soc_write(w->codec, 0x69, 0x04);
+		snd_soc_write(w->codec, 0x69, 0x04);*/
 		/* clk2 used as EQ clk, OSR = 6xFs for 8k resampling to 48k */
-		snd_soc_write(w->codec, ES8396_EQ_CLK_OSR_SEL_REG1C, 0x35);
+		//snd_soc_write(w->codec, ES8396_EQ_CLK_OSR_SEL_REG1C, 0x35);
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0x00);
-
 		for (index = 0; index < 59; index++) {
 			snd_soc_write(w->codec, ES8396_SHARED_DATA_REG1E,
 				      es8396_equalizer_lpf_bt_incall[index]);
@@ -843,6 +854,7 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
 		snd_soc_write(w->codec, ES8396_SHARED_DATA_REG1E,
 			      es8396_equalizer_lpf_bt_incall[59]);
+		#if 0
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
@@ -881,6 +893,7 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
+		#endif
 		break;
 	default:
 		printk("Enter into %s  %d, event = others\n", __func__,
@@ -899,28 +912,28 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 	unsigned int index;
 	unsigned int regv;
 	int  ret = 0;
-
 	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
 			 __func__, __LINE__);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPIN */
-		snd_soc_update_bits(w->codec, ES8396_SDP2_IN_FMT_REG22,
-				    0x3F, 0x13);
+		//snd_soc_update_bits(w->codec, ES8396_SDP2_IN_FMT_REG22, 0x3F, 0x0b);
+		snd_soc_write(w->codec, ES8396_SDP2_IN_FMT_REG22,0x0b);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPO */
-		snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23,
-				    0x3F, 0x33);
-		snd_soc_write(w->codec, 0x8, 0x0f);
+		snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23, 0x3F, 0x33);
+		/*snd_soc_write(w->codec, 0x8, 0x0f);
 		snd_soc_write(w->codec, 0xd, 0x00);
-		snd_soc_write(w->codec, 0x9, 0x04);
-		snd_soc_write(w->codec, 0x18, 0x51);	/* Enable HPOUT */
-		snd_soc_write(w->codec, 0x19, 0x51);	/* Enable HPOUT */
-		snd_soc_write(w->codec, 0x1A, 0x40);	/* Enable HPOUT */
-		snd_soc_write(w->codec, 0x67, 0x0d);
-		snd_soc_write(w->codec, 0x69, 0x04);
+		snd_soc_write(w->codec, 0x9, 0x04);*/
+		snd_soc_write(w->codec, 0x18, 0x11);	
+		snd_soc_write(w->codec, 0x19, 0x11);	
+		snd_soc_write(w->codec, 0x1A, 0x02);	
+		snd_soc_write(w->codec, 0x1B, 0x11);
+		snd_soc_write(w->codec, 0x1C, 0x22);
+		/*snd_soc_write(w->codec, 0x67, 0x0d);
+		snd_soc_write(w->codec, 0x69, 0x04);*/
 		/* clk2 used as EQ clk, OSR = 6xFs for 8k resampling to 48k */
-		snd_soc_write(w->codec, ES8396_EQ_CLK_OSR_SEL_REG1C, 0x35);
+		//snd_soc_write(w->codec, ES8396_EQ_CLK_OSR_SEL_REG1C, 0x35);
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0x00);
 
 		for (index = 0; index < 59; index++)
@@ -930,6 +943,7 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
 		snd_soc_write(w->codec, ES8396_SHARED_DATA_REG1E,
 			      es8396_equalizer_lpf_bt_incall[59]);
+	#if 0
 				/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
@@ -969,13 +983,14 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
+		#endif
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMD\n",
 			 __func__, __LINE__);
 		/* DSP-B, 1st SCLK after LRCK edge, I2S2 SDPO */
-		snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23,
-				    0x40, 0x40);
+		//snd_soc_update_bits(w->codec, ES8396_SDP2_OUT_FMT_REG23,
+		//		    0x40, 0x40);
 		break;
 	default:
 		printk("Enter into %s  %d, event = others\n", __func__,
@@ -2687,8 +2702,8 @@ static int es8396_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		snd_soc_write(codec, ES8396_SDP_1_MS_REG12, mmcc);
 		break;
 	case ES8396_SDP2:
-		snd_soc_write(codec, ES8396_SDP2_IN_FMT_REG22, spc);
-		snd_soc_write(codec, ES8396_SDP2_OUT_FMT_REG23, spc);
+		//snd_soc_write(codec, ES8396_SDP2_IN_FMT_REG22, spc);
+		//snd_soc_write(codec, ES8396_SDP2_OUT_FMT_REG23, spc);
 		snd_soc_write(codec, ES8396_SDP_2_MS_REG13, mmcc);
 		break;
 	case ES8396_SDP3:
@@ -3182,8 +3197,8 @@ static int es8396_probe(struct snd_soc_codec *codec)
 
 	snd_soc_write(tron_codec, 0x1f, 0x40);
 	snd_soc_write(tron_codec, 0x20, 0x40);
-	snd_soc_write(tron_codec, 0x22, 0x53);
-	snd_soc_write(tron_codec, 0x23, 0x73);
+	snd_soc_write(tron_codec, 0x22, 0x0b);
+	snd_soc_write(tron_codec, 0x23, 0x33);
 
 	if (es8396_valid_micbias(es8396->mic_bias_lvl) == false) {
 		pr_err("MIC BIAS Level error.\n");

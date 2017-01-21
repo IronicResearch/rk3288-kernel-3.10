@@ -1876,8 +1876,8 @@ static void rk81x_battery_dc_delay_work(struct work_struct *work)
 			rk81x_bat_set_otg_state(di, USB_OTG_POWER_OFF);
 	} else {
 		if (di->otg_online) {
-			rk81x_bat_set_otg_state(di, USB_OTG_POWER_ON);
-			rk81x_bat_set_charger_param(di, NO_CHARGER);
+			rk81x_bat_set_otg_state(di, USB_OTG_POWER_OFF);
+                 rk81x_bat_set_charger_param(di, NO_CHARGER);
 		} else {
 			queue_delayed_work(di->wq,
 					   &di->ac_usb_check_work,
@@ -3781,6 +3781,13 @@ static void rk81x_battery_otg_delay_work(struct work_struct *work)
 {
 	struct rk81x_battery *di = container_of(work,
 			struct rk81x_battery, otg_check_work.work);
+ 
+
+    enum charger_type charger_type;
+     charger_type = rk81x_bat_get_dc_state(di);
+ 
+
+
 
 	enum bc_port_type event = di->charge_otg;
 
@@ -3795,8 +3802,16 @@ static void rk81x_battery_otg_delay_work(struct work_struct *work)
 			return;
 		}
 		dev_info(di->dev, "charge disable, otg enable\n");
-		rk81x_bat_set_otg_state(di, USB_OTG_POWER_ON);
-		break;
+	//	rk81x_bat_set_otg_state(di, USB_OTG_POWER_ON);
+     if (charger_type == DC_CHARGER) {
+         rk81x_bat_set_otg_state(di, USB_OTG_POWER_OFF);
+		queue_delayed_work(di->wq, &di->dc_det_check_work,
+	   msecs_to_jiffies(10));
+     }
+     else
+         rk81x_bat_set_otg_state(di, USB_OTG_POWER_ON);
+
+        break;
 
 	case USB_OTG_POWER_OFF:
 		dev_info(di->dev, "charge enable, otg disable\n");

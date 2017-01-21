@@ -59,7 +59,7 @@
 	backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm0 0 30000>;
-		/*
+	/*
 		brightness-levels = <255 254 253 252 251 250 249 248 247 246 245 244 243 242 241 240
 		     239 238 237 236 235 234 233 232 231 230 229 228 227 226 225 224 223 222 221 220
 		     219 218 217 216 215 214 213 212 211 210 209 208 207 206 205 204 203 202 201 200
@@ -72,7 +72,7 @@
 		     69 68 67 66 65 64 63 62 61 60 59 58 57 56 55 54 53 52 51 50 49 48 47 46 45 44 43 42 41 40
 		     39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10
 		     9 8 7 6 5 4 3 2 1 0>;
-			*/
+		*/	
 		
 		brightness-levels = <255 180 180 179 179 178 178 177 177 176 176 175 175 174 174 173 
 		     173 172 172 171 171 171 169 169 169 168 168 168 167 167 167 166 166 166 165 164
@@ -825,14 +825,14 @@
 
 		rk818_dcdc4_reg: regulator@3 {
 			regulator-name= "vccio";
-			regulator-min-microvolt = <3000000>;
-			regulator-max-microvolt = <3000000>;
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
 			regulator-initial-mode = <0x2>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
 				regulator-state-mode = <0x2>;
 				regulator-state-enabled;
-				regulator-state-uv = <3000000>;
+				regulator-state-uv = <3300000>;
 			};
 		};
 
@@ -946,17 +946,15 @@
 		};
 	};
 	battery {
-		ocv_table =
-		    <3400 3599 3671 3701 3728 3746 3762 3772 3781 3792 3816 3836
-		    3866 3910 3942 3971 4002 4050 4088 4132 4183 >;
-		design_capacity = <4000>;
-		design_qmax = <4100>;
-		bat_res = <100>;
-		max_input_current = <2000>;
-		max_chrg_current = <1800>;
-		max_chrg_voltage = <4200>;
-		sleep_enter_current = <300>;
-		sleep_exit_current = <300>;
+		ocv_table = <3400 3654 3686 3710 3733 3748 3765 3778 3788 3799 3812 3831 3853 3896 3929 3959 3986 4021 4070 4108 4166>;
+		design_capacity = <4634>;
+		design_qmax = <5097>;
+		bat_res = <140>;
+		max_input_currentmA = <2000>;
+		max_chrg_currentmA = <1800>;
+		max_chrg_voltage = <4234>;
+		sleep_enter_current = <150>;
+		sleep_exit_current = <180>;
 		power_off_thresd = <3400>;
 		zero_algorithm_vol = <3850>;
 		fb_temperature = <115>;
