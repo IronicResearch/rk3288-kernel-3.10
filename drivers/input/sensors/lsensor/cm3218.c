@@ -136,6 +136,7 @@ static int cm3218_read_lux(struct i2c_client *client, int *lux)
 
 	*lux  = lux_data * LENSFACTOR;
 	*lux /= 1000;
+    printk("---------------------------lux = %d\n\n\n",*lux);
 
 	return 0;
 }
@@ -198,38 +199,10 @@ static int sensor_init(struct i2c_client *client)
 
 static int light_report_value(struct input_dev *input, int data)
 {
-	unsigned char index = 0;
-	
-	if(data <= 700){
-		index = 0;goto report;
-	}
-	else if(data <= 1400){
-		index = 1;goto report;
-	}
-	else if(data <= 2800){
-		index = 2;goto report;
-	}
-	else if(data <= 5600){
-		index = 3;goto report;
-	}
-	else if(data <= 11200){
-		index = 4;goto report;
-	}
-	else if(data <= 22400){
-		index = 5;goto report;
-	}
-	else if(data <= 44800){
-		index = 6;goto report;
-	}
-	else{
-		index = 7;goto report;
-	}
-
-report:
-	input_report_abs(input, ABS_MISC, index);
+	input_report_abs(input, ABS_MISC, data);
 	input_sync(input);
-    printk("----------------%d\n",index);
-	return index;
+ //   printk("----------------%d\n",index);
+	return data;
 }
 
 
