@@ -367,7 +367,7 @@ static void pcm_pop_work_events(struct work_struct *work)
 		regv |= 0x88;
 		/* set enspk_l,enspk_r */
 		snd_soc_write(tron_codec, ES8396_SPK_EN_VOL_REG3B, regv);
-		snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x16);
+		//snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x16);
 		/* dac csm startup, dac digital still on */
 		snd_soc_update_bits(tron_codec, ES8396_DAC_CSM_REG66,
 				    0x03, 0x02);
