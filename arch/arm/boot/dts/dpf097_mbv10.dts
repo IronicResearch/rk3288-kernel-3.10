@@ -962,7 +962,7 @@
 		max_soc_offset = <60>;
 		monitor_sec = <5>;
 		virtual_power = <0>;
-		power_dc2otg = <0>;
+		power_dc2otg = <1>;
 		dc_det_adc = <0>;
 		dc_det_gpio = <&gpio0 GPIO_B0 GPIO_ACTIVE_LOW>;
 	};
