@@ -376,11 +376,13 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 		return IRQ_HANDLED;
 	}
 	*/
+	
 	if ((i == 3 || i ==4) && vr_jiffy1end != 0){ 
 		if(jiffies_to_msecs(jiffies-vr_jiffy1end) < 10 )//降低上报速度
 			return IRQ_HANDLED;
 		
 	}
+	
 	
 	
 	if ((i == 0 || i == 1) && vr_jiffy2end != 0){ //降低上报速度
@@ -414,12 +416,14 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 	//int a = gpio_get_value(ddata->switch_desc[3].gpio);
 	//int b = gpio_get_value(ddata->switch_desc[4].gpio);
 	 if ((i == 3) && (right_flag == 0)){ //一个左旋周期
-	//		printk("scrl b end  %d-%d.................\n",a,b);
-		if ((!gpio_get_value(ddata->switch_desc[3].gpio)) && (!gpio_get_value(ddata->switch_desc[4].gpio))){
-				vr_jiffy1end = jiffies;
+		//	printk("scrl b end  %d-%d.................\n",a,b);
 				left_flag = -1;//clear flag
 				right_flag = -1;//
-				input_report_rel(ddata->input, ddata->switch_desc[i].code, -1);
+		if ((!gpio_get_value(ddata->switch_desc[3].gpio)) && (!gpio_get_value(ddata->switch_desc[4].gpio))){
+				vr_jiffy1end = jiffies;
+			//	left_flag = -1;//clear flag
+			//	right_flag = -1;//
+				input_report_rel(ddata->input, ddata->switch_desc[i].code, 1);
 				input_sync(ddata->input);
 		}
 	} else if ((i == 3)) {//scrl_a
@@ -435,12 +439,14 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 
 	if ((i == 4) && (left_flag == 0)){//一个右旋周期
 	//		printk("scrl a end  %d-%d.................\n",a,b);
+			left_flag = -1;
+			right_flag = -1;//clear flag
 		if ( (!gpio_get_value(ddata->switch_desc[4].gpio)) && (!gpio_get_value(ddata->switch_desc[3].gpio))) {
 			
 				vr_jiffy1end = jiffies;
-				right_flag = -1;//clear flag
-				left_flag = -1;
-				input_report_rel(ddata->input, ddata->switch_desc[i].code,1);
+			//	right_flag = -1;//clear flag
+			//	left_flag = -1;
+				input_report_rel(ddata->input, ddata->switch_desc[i].code,-1);
 				input_sync(ddata->input);
 		}
 	}else if ((i == 4)){ //scrl_b
@@ -459,7 +465,7 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 				vr_jiffy2end = jiffies;
 				down_flag = -1;//clear flag
 				up_flag = -1;//
-				input_report_rel(ddata->input, ddata->switch_desc[i].code, -1);
+				input_report_rel(ddata->input, ddata->switch_desc[i].code, 1);
 				input_sync(ddata->input);
 				
 		}
@@ -475,7 +481,7 @@ static irqreturn_t  switch_irq(int irq,void *dev_id)
 				vr_jiffy2end = jiffies;
 				down_flag = -1;//clear flag
 				up_flag = -1;//
-				input_report_rel(ddata->input, ddata->switch_desc[i].code, 1);
+				input_report_rel(ddata->input, ddata->switch_desc[i].code, -1);
 				input_sync(ddata->input);
 				
 		}

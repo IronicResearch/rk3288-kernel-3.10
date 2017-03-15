@@ -296,7 +296,7 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 		pwm_set_period(pb->pwm, data->pwm_period_ns);
 
 	pb->period = pwm_get_period(pb->pwm);
-	pb->period = 400;
+	pb->period = 4000;
 	printk("pb->period is %d",pb->period);
 	pb->lth_brightness = data->lth_brightness * (pb->period / pb->scale);
 
