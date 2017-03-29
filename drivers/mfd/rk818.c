@@ -1216,24 +1216,68 @@ static struct syscore_ops rk818_syscore_ops = {
 	.shutdown = rk818_shutdown,
 };
 
+extern int shutdown_charge;
+extern int power_gpio_key;
+static unsigned long int shutdown_jiffies;
 void rk818_device_shutdown(void)
 {
 	int ret, i;
 	u8 reg = 0;
 	struct rk818 *rk818 = g_rk818;
+	if (shutdown_charge == 0){
 
-	for (i = 0; i < 10; i++) {
-		pr_info("%s\n", __func__);
-		ret = rk818_i2c_read(rk818, RK818_DEVCTRL_REG, 1, &reg);
-		if (ret < 0)
-			continue;
-		ret = rk818_i2c_write(rk818, RK818_DEVCTRL_REG, 1,
-				     (reg | (0x1 << 0)));
-		if (ret < 0) {
-			pr_err("rk818 power off error!\n");
-			continue;
+		for (i = 0; i < 10; i++) {
+
+			printk("xwp.......dof097 shutdown no charge\n");
+			pr_info("%s\n", __func__);
+			ret = rk818_i2c_read(rk818, RK818_DEVCTRL_REG, 1, &reg);
+			if (ret < 0)
+				continue;
+			ret = rk818_i2c_write(rk818, RK818_DEVCTRL_REG, 1,
+					(reg | (0x1 << 0)));
+			if (ret < 0) {
+				pr_err("rk818 power off error!\n");
+				continue;
+			}
 		}
+	} else if(shutdown_charge == 1){
+		int tmp = 1;
+		while(1){
+			printk("xwp.......dof097 shutdown  charging %d\n",shutdown_charge);
+			if (gpio_get_value(power_gpio_key) == 0){
+				if(tmp == 1){
+					shutdown_jiffies = jiffies;//init
+					tmp = 0;
+				}
+			}else {
+				shutdown_jiffies = jiffies;
+				tmp = 1;
+			}
+
+			if (jiffies_to_msecs(jiffies-shutdown_jiffies)>2500 || shutdown_charge == 0 ){
+				printk("xwp.......dpf097 shutdown  charging..... %d\n",shutdown_charge);
+				for (i = 0; i < 10; i++) {
+
+
+					pr_info("%s\n", __func__);
+					ret = rk818_i2c_read(rk818, RK818_DEVCTRL_REG, 1, &reg);
+					if (ret < 0)
+						continue;
+					ret = rk818_i2c_write(rk818, RK818_DEVCTRL_REG, 1,
+							(reg | (0x1 << 0)));
+					if (ret < 0) {
+						pr_err("rk818 power off error!\n");
+						continue;
+					}
+				}
+				break;
+			}
+			msleep(200);
+		}
+
 	}
+
+	printk("power key 3S\n");
 	while(1) wfi();
 }
 EXPORT_SYMBOL_GPL(rk818_device_shutdown);

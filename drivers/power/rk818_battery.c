@@ -2288,6 +2288,7 @@ static void rk818_bat_dump_time_table(struct rk818_battery *di)
 	DBG("\n");
 }
 
+int shutdown_charge = 0;
 static void rk818_bat_debug_info(struct rk818_battery *di)
 {
 	u8 sup_tst, ggcon, ggsts, vb_mod, ts_ctrl;
@@ -2378,6 +2379,9 @@ static void rk818_bat_debug_info(struct rk818_battery *di)
 	    di->pwroff_min, di->is_initialized, di->is_sw_reset,
 	    di->dbg_cap_low0, di->is_first_on, di->last_dsoc
 	   );
+if (di->ac_in == 1 || di->usb_in ==1 || di->dc_in ==1)
+	shutdown_charge = 1;
+	
 }
 
 static void rk818_bat_init_capacity(struct rk818_battery *di, u32 cap)
@@ -3390,7 +3394,7 @@ static irqreturn_t rk818_vb_low_irq(int irq, void *bat)
 static irqreturn_t rk818_plug_in(int irq, void *bat)
 {
 	struct rk818_battery *di = (struct rk818_battery *)bat;
-
+	shutdown_charge = 1;
 	di->plug_in_irq = 1;
 	queue_delayed_work(di->charger_wq, &di->irq_delay_work, 0);
 
@@ -3400,7 +3404,7 @@ static irqreturn_t rk818_plug_in(int irq, void *bat)
 static irqreturn_t rk818_plug_out(int irq, void  *bat)
 {
 	struct rk818_battery *di = (struct rk818_battery *)bat;
-
+	shutdown_charge = 0;
 	di->plug_out_irq = 1;
 	queue_delayed_work(di->charger_wq, &di->irq_delay_work, 0);
 
@@ -3944,6 +3948,10 @@ static int rk818_battery_probe(struct platform_device *pdev)
 	rk818_bat_init_charger(di);
 	rk818_bat_init_sysfs(di);
 	rk818_bat_register_fb_notify(di);
+	if (di->ac_in == 1 || di->usb_in ==1 || di->dc_in ==1)
+		shutdown_charge = 1;
+
+	
 	wake_lock_init(&di->wake_lock, WAKE_LOCK_SUSPEND, "rk818_bat_lock");
 	di->bat_monitor_wq = alloc_ordered_workqueue("%s",
 			WQ_MEM_RECLAIM | WQ_FREEZABLE, "rk818-bat-monitor-wq");
