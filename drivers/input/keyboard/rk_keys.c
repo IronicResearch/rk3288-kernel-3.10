@@ -238,6 +238,7 @@ static int rk_key_type_get(struct device_node *node,
 		return -1;
 }
 
+int power_gpio_key;
 static int rk_keys_parse_dt(struct rk_keys_drvdata *pdata,
 			    struct platform_device *pdev)
 {
@@ -277,7 +278,7 @@ static int rk_keys_parse_dt(struct rk_keys_drvdata *pdata,
 						ret);
 				goto error_ret;
 			}
-
+			power_gpio_key = gpio;
 			pdata->button[i].gpio = gpio;
 			pdata->button[i].active_low =
 			    flags & OF_GPIO_ACTIVE_LOW;

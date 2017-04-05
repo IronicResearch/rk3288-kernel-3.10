@@ -714,7 +714,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		//TODO:You can change the IT7236_TOUCH_DATA_REGISTER_ADDRESS to others register address.
 	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_SLIDER_REGISTER_ADDRESS, pucSliderBuffer, 4);
 //	i2cReadFromIt7236(gl_ts->client, IT7236_TOUCH_PROXIMITY_REGISTER_ADDRESS, pucProximityBuffer, 2); 
-	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
+//	printk("[IT7236] %s : slider Buffer =%d \t  proximity = %d....%d \n",__func__,(int)pucSliderBuffer[1],(int)pucSliderBuffer[2],(int)pucSliderBuffer[3]);
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]*(int)(255/60));
 //	printk("[IT7236] %s : slider Buffer =%d \t \n",__func__,(int)pucSliderBuffer[1]);
 
@@ -804,7 +804,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
         }
 
 	
-	printk("it7236_slider_flag %d,...it7236_promixy_flag %d \n",it7236_slider_flag,it7236_promixy_flag);
+//	printk("it7236_slider_flag %d,...it7236_promixy_flag %d \n",it7236_slider_flag,it7236_promixy_flag);
 
 }
 
