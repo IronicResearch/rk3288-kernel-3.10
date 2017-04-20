@@ -336,8 +336,8 @@
 };
 		
 &sdio {
-		clock-frequency = <50000000>;
-		clock-freq-min-max = <200000 50000000>;
+		clock-frequency = <150000000>;
+		clock-freq-min-max = <200000 150000000>;
 		supports-highspeed;
 		supports-sdio;
 		ignore-pm-notify;
@@ -740,23 +740,23 @@
 &clk_ddr_dvfs_table {
 	operating-points = <
 		/* KHz    uV */
-		200000 1050000
-		300000 1050000
-		400000 1100000
+	//	200000 1050000
+	//	300000 1050000
+	//	400000 1100000
 		533000 1150000
-		600000 1200000
+	//	600000 1200000
 		>;
 
 	freq-table = <
 		/*status		freq(KHz)*/
-		SYS_STATUS_NORMAL	400000
-		SYS_STATUS_SUSPEND	200000
-		SYS_STATUS_VIDEO_1080P  240000
-		SYS_STATUS_VIDEO_4K     400000
+		SYS_STATUS_NORMAL	528000
+		SYS_STATUS_SUSPEND	528000
+		SYS_STATUS_VIDEO_1080P  528000
+		SYS_STATUS_VIDEO_4K     528000
 		SYS_STATUS_PERFORMANCE  528000
-		SYS_STATUS_DUALVIEW	400000
-		SYS_STATUS_BOOST	324000
-		SYS_STATUS_ISP		400000
+		SYS_STATUS_DUALVIEW	528000
+		SYS_STATUS_BOOST	528000
+		SYS_STATUS_ISP		528000
 		>;
 	bd-freq-table = <
 		/* bandwidth   freq */
