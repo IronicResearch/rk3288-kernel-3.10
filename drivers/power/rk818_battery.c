@@ -46,7 +46,7 @@
 #include <linux/workqueue.h>
 #include "rk818_battery.h"
 
-static int dbg_enable = 0;
+static int dbg_enable = 1;
 module_param_named(dbg_level, dbg_enable, int, 0644);
 
 #define DBG(args...) \
