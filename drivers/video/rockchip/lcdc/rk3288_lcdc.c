@@ -1392,7 +1392,7 @@ static int rk3288_load_screen(struct rk_lcdc_driver *dev_drv, bool initscreen)
 		lcdc_msk_reg(lcdc_dev, DSP_CTRL0, mask, val);
 
 		mask = m_DSP_BG_BLUE | m_DSP_BG_GREEN | m_DSP_BG_RED;
-		val  = v_DSP_BG_BLUE(0x1F) | v_DSP_BG_GREEN(0x40) | v_DSP_BG_RED(0x52);
+		val  = v_DSP_BG_BLUE(0x52) | v_DSP_BG_GREEN(0x40) | v_DSP_BG_RED(0x1F);
 		lcdc_msk_reg(lcdc_dev, DSP_BG, mask, val);
 
 		mask = m_DSP_HS_PW | m_DSP_HTOTAL;
