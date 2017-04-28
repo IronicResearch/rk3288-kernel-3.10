@@ -412,8 +412,8 @@ static void rk818_bat_dump_regs(struct rk818_battery *di, u8 start, u8 end)
 		return;
 
 	DBG("dump regs from: 0x%x-->0x%x\n", start, end);
-	for (i = start; i < end; i++)
-		DBG("0x%x: 0x%0x\n", i, rk818_bat_read(di, i));
+	for (i = start; i <= end; i++)
+		DBG("0x%02x: 0x%02x\n", i, rk818_bat_read(di, i));
 }
 
 static bool rk818_bat_chrg_online(struct rk818_battery *di)
@@ -2298,6 +2298,7 @@ static void rk818_bat_debug_info(struct rk818_battery *di)
 	u8 chrg_ctrl2, chrg_ctrl3, rtc, misc, dcdc_en;
 	const char *work_mode[] = {"ZERO", "FINISH", "UN", "UN", "SMOOTH"};
 	const char *bat_mode[] = {"BAT", "VIRTUAL"};
+	static int prev_dbg_enable = 0;
 
 	if (rk818_bat_chrg_online(di))
 		di->plug_out_base = get_boot_sec();
@@ -2381,7 +2382,11 @@ static void rk818_bat_debug_info(struct rk818_battery *di)
 	   );
 if (di->ac_in == 1 || di->usb_in ==1 || di->dc_in ==1)
 	shutdown_charge = 1;
-	
+
+	if (dbg_enable != prev_dbg_enable) {
+	    rk818_bat_dump_regs(di, RK818_CHRG_COMP_REG1, RK818_MISC_MARK_REG);
+	    prev_dbg_enable = dbg_enable;
+	}
 }
 
 static void rk818_bat_init_capacity(struct rk818_battery *di, u32 cap)
