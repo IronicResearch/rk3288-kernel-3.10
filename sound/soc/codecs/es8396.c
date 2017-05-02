@@ -530,7 +530,7 @@ static int micbias_event(struct snd_soc_dapm_widget *w,
 		} else {
 			regv &= 0xf0;	/* disable DMIC CLK */
 		}
-			snd_soc_write(w->codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xa0);
+			snd_soc_write(w->codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x60);
 			snd_soc_write(w->codec, ES8396_ALRCK_GPIO_SEL_REG15, regv);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -571,8 +571,8 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 		/* set adc alc */
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(w->codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x00);
 		
@@ -745,8 +745,8 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 		/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC9);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1b);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x04);		
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x01);
 		if (es8396->dmic_amic == MIC_DMIC) {
@@ -758,7 +758,7 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
 		if (es8396->dmic_amic == MIC_DMIC) {
 		snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
-		snd_soc_write(tron_codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xa0);
+		snd_soc_write(tron_codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x60);
 		}
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
@@ -857,8 +857,8 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		#if 0
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
@@ -947,8 +947,8 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 				/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
@@ -2902,8 +2902,8 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 		/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
@@ -3219,7 +3219,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x00);
 	else
 		/*use digital mic */
-		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xa0);
+		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x60);
 
 	/*Enable HPF, LDATA= LADC, RDATA = LADC */
 	snd_soc_write(codec, ES8396_ADC_HPF_COMP_DASEL_REG55, 0x30);
