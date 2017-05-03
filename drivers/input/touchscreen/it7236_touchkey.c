@@ -723,10 +723,11 @@ static void Read_Point(struct IT7236_tk_data *ts)
 //&& touch_value1 != (int)pucSliderBuffer[1]
 	if((int)pucSliderBuffer[1] != 255  ){
 
-			if ((int)pucSliderBuffer[1] == 60)
+			if ((int)pucSliderBuffer[1] == 120)
 				touch_value = 0; 
 			else
-				touch_value = 254 - ((int)pucSliderBuffer[1]*17)/4;//(255.0/60.0) = 4.25
+			//	touch_value = 254 - ((int)pucSliderBuffer[1]*17)/4;//(255.0/60.0) = 4.25
+				touch_value = 120 - (int)pucSliderBuffer[1];//(255.0/60.0) = 4.25
 			
 			
 			
@@ -778,7 +779,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
     }else if( proximity_flag != 302 && ((int)pucSliderBuffer[2] == 0 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
-        input_report_abs(input_dev, ABS_MT_POSITION_Y, 302);
+        input_report_abs(input_dev, ABS_MT_POSITION_Y, 301);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
      //   printk("right\n\n");
@@ -787,7 +788,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
     }else if(proximity_flag != 303 && ((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
         //input_report_key(input_dev,BTN_5,1);
         //input_sync(input_dev);
-        input_report_abs(input_dev, ABS_MT_POSITION_Y, 303);
+        input_report_abs(input_dev, ABS_MT_POSITION_Y, 301);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
     //    printk("mid\n\n");
