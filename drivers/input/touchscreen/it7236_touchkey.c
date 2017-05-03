@@ -825,8 +825,20 @@ static irqreturn_t IT7236_tk_work_func(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static void it7236_timer_work(struct work_struct *work){
-	
+static void it7236_timer_work(struct work_struct *work)
+{
+#if IT7236_FW_AUTO_UPGRADE
+	if (it7236_upgrade_fail) {
+		it7236_upgrade_fail = 0;
+		IT7236_upgrade_auto();
+		if (it7236_upgrade_fail) {
+			queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(10));
+			return;
+		}
+		get_config_ver();
+		return;
+	}
+#endif
 	Read_Point(gl_ts);
 	if (it7236_promixy_flag  == 1  || it7236_slider_flag == 1){ //未离开距感 继续轮循
 		queue_delayed_work(IT7236_wq ,&it7236_delay_work , msecs_to_jiffies(10));
@@ -875,12 +887,6 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 
 
 	i2c_addr_bak = gl_ts->client->addr;
-	#if IT7236_FW_AUTO_UPGRADE
-	IT7236_upgrade_auto();
-	#endif
-	if (it7236_upgrade_fail)
-		return 0;
-	get_config_ver();
 
 
 	IT7236_wq = create_workqueue("IT7236_wq");
@@ -889,6 +895,16 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 	
 	INIT_DELAYED_WORK(&it7236_delay_work, it7236_timer_work);
 	
+
+
+#if IT7236_FW_AUTO_UPGRADE
+	IT7236_upgrade_auto();
+	if (it7236_upgrade_fail)
+		queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(10));
+#endif
+	get_config_ver();
+
+
 #if !IT7236_USE_IRQ
 
 	//for poll
