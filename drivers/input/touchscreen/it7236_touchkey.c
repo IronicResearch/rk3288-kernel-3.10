@@ -519,7 +519,7 @@ void  IT7236_upgrade_auto(void)
             result = it7236_upgrade(rawDATA, sizeof(rawDATA));
             retry++;
         }
-        while((result== -1)&&(retry<3));
+        while((result== -1)&&(retry<1));
     }
 
 }
@@ -831,10 +831,11 @@ static void it7236_timer_work(struct work_struct *work)
 		it7236_upgrade_fail = 0;
 		IT7236_upgrade_auto();
 		if (it7236_upgrade_fail) {
-			queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(10));
+			queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(1000));
 			return;
 		}
 		get_config_ver();
+		enable_irq(gl_ts->client->irq);
 		return;
 	}
 #endif
@@ -897,9 +898,11 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 
 
 #if IT7236_FW_AUTO_UPGRADE
-	IT7236_upgrade_auto();
+	//IT7236_upgrade_auto();
+	if (GetCurrentFWVersion() != get_firmware_ver_cmd())
+		it7236_upgrade_fail = 42;
 	if (it7236_upgrade_fail)
-		queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(10));
+		queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(1000));
 #endif
 	get_config_ver();
 
