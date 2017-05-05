@@ -287,7 +287,14 @@
 			*/
 		};
 	//could add other pinctrl definition such as gpio
-
+	gpio7_i2c4 {
+			i2c4-sda {
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			i2c4-scl {
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+		};
 };
 
 &nandc0 {
@@ -507,10 +514,12 @@
 
 &i2c2 {
 	status = "okay";
+/*
 	es8323: es8323@10 {
 		compatible = "es8323";
 		reg = <0x10>;
 	};
+*/
 	es8396: es8396@10 {
 		compatible = "es8396";
 		reg = <0x10>;
@@ -526,6 +535,7 @@
 
 &i2c4 {
 	status = "okay";
+	rockchip,check-idle = <0>;
 /*
 	
 	ts@01 {
