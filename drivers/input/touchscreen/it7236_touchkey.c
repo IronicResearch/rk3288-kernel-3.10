@@ -258,6 +258,7 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 	err_temp = i2cWriteToIt7236(gl_ts->client, 0xF4, pucBuffer, 1);
 	if(err_temp != 1){
 		printk("[IT7236]%s : [%d]  xxx  error err_temp=%d \n",__func__,__LINE__,err_temp);
+		it7236_upgrade_fail = 2;
 		return err_temp;
 	}
 
@@ -293,6 +294,7 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 		err_temp = i2cWriteToIt7236(gl_ts->client, 0xF7, pucBuffer, 1);	// Write EF PL Mode Cmd
 		if(err_temp != 1){
 			printk("[IT7236]%s : [%d]  xxx  error err_temp=%d \n",__func__,__LINE__,err_temp);
+			it7236_upgrade_fail = 2;
 			return err_temp;
 		}
 
@@ -398,6 +400,7 @@ static int it7236_upgrade(u8* InputBuffer, int fileSize)
 		fnFirmwareReinitialize();
 		printk("[IT7236] Failed to Upgrade Firmware\n\n");
 		fw_upgrade_success = 1;
+		it7236_upgrade_fail = 2;
 		return -1;
 	}
 
@@ -899,10 +902,10 @@ static int IT7236_tk_probe(struct i2c_client *client, const struct i2c_device_id
 
 #if IT7236_FW_AUTO_UPGRADE
 	//IT7236_upgrade_auto();
-	if (GetCurrentFWVersion() != get_firmware_ver_cmd())
+	if (GetCurrentFWVersion() != get_firmware_ver_cmd()) {
 		it7236_upgrade_fail = 42;
-	if (it7236_upgrade_fail)
 		queue_delayed_work(IT7236_wq, &it7236_delay_work, msecs_to_jiffies(1000));
+	}
 #endif
 	get_config_ver();
 
