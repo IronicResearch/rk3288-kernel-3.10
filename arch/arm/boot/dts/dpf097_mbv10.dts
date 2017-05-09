@@ -535,7 +535,7 @@
 
 &i2c4 {
 	status = "okay";
-	rockchip,check-idle = <0>;
+	rockchip,check-idle = <2>;
 /*
 	
 	ts@01 {

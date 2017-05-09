@@ -777,8 +777,10 @@ static int rockchip_i2c_xfer(struct i2c_adapter *adap,
 		}
 		if (retry == 0) {
 			dev_err(i2c->dev, "i2c is not in idle(state = %d)\n", state);
-			ret = -EIO;
-			goto out;
+			if (i2c->check_idle < 2)  {
+				ret = -EIO;
+				goto out;
+			}
 		}
 	}
 
@@ -871,6 +873,7 @@ static int rockchip_i2c_probe(struct platform_device *pdev)
 
 	i2c->check_idle = true;
 	of_property_read_u32(np, "rockchip,check-idle", &i2c->check_idle);
+	dev_info(&pdev->dev, "check_idle = %d\n", i2c->check_idle);
 	if (i2c->check_idle) {
 		i2c->sda_gpio = of_get_gpio(np, 0);
 		if (!gpio_is_valid(i2c->sda_gpio)) {
