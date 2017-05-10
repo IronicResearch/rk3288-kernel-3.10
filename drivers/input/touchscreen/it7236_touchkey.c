@@ -702,6 +702,27 @@ static int get_config_ver(void)
 }
 #endif 
 
+inline unsigned int NORMALIZE(unsigned int x, int min, int max)
+{
+	unsigned int y = x;
+
+	// clamp to range
+	if (y < min)
+	    y = min;
+	else if (y > max)
+	    y = max;
+
+	// offset by range
+	y -= min;
+	if (y == 0)
+	    return 0;
+
+	// scale to range
+	y *= 255;
+	y /= (max - min);
+	return y;
+}
+
 
 static int it7236_flag = 0;
 static int it7236_slider_flag = 0;
@@ -733,6 +754,8 @@ static void Read_Point(struct IT7236_tk_data *ts)
 				touch_value = 120 - (int)pucSliderBuffer[1];//(255.0/60.0) = 4.25
 			
 			
+			// normalize active range of raw values to 0..255
+			touch_value = NORMALIZE(touch_value, 2, 120);
 			
 			
 			if(it7236_flag == 2){ //重新按下
