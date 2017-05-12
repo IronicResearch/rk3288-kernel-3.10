@@ -51,7 +51,7 @@ static struct reg_default es8396_reg_defaults[] = {
 	{0x06, 0x00},
 	{0x07, 0x00},
 	{0x08, 0x50},
-	{0x09, 0x04},
+	{0x09, 0x08},
 	{0x0a, 0x00},
 	{0x0b, 0x20},
 	{0x0c, 0x20},
@@ -530,7 +530,7 @@ static int micbias_event(struct snd_soc_dapm_widget *w,
 		} else {
 			regv &= 0xf0;	/* disable DMIC CLK */
 		}
-			snd_soc_write(w->codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xA0);
+			snd_soc_write(w->codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x90);
 			snd_soc_write(w->codec, ES8396_ALRCK_GPIO_SEL_REG15, regv);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -569,10 +569,10 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 		snd_soc_update_bits(w->codec, ES8396_SDP1_OUT_FMT_REG20, 0x40,
 				    0x40);
 		/* set adc alc */
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCa);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1b);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xdb);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(w->codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x00);
 		
@@ -601,14 +601,14 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
-		snd_soc_write(w->codec, ES8396_ADC_CSM_REG53, 0x00);
+		snd_soc_write(w->codec, ES8396_ADC_CSM_REG53, 0x04);   //00 original, 04 for adc double speed
 		/* force adc stm to normal */
 		snd_soc_write(w->codec, ES8396_ADC_FORCE_REG77, 0x40);
 		snd_soc_write(w->codec, ES8396_ADC_FORCE_REG77, 0x0);
 		/* ADC Volume =0db */
 		snd_soc_write(w->codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
 		snd_soc_write(w->codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
-		snd_soc_write(w->codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		snd_soc_write(w->codec, ES8396_ADC_CLK_DIV_REG09, 0x08); //04 original, 08 for adc double speed
 
 		schedule_delayed_work(&es8396->adc_depop_work,
 				      msecs_to_jiffies(150));
@@ -618,8 +618,8 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 			 __LINE__);
 		snd_soc_update_bits(w->codec, ES8396_SDP1_OUT_FMT_REG20, 0x40,
 				    0x40);
-		snd_soc_write(w->codec, ES8396_ADC_CSM_REG53, 0x20);
-		snd_soc_write(w->codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		snd_soc_write(w->codec, ES8396_ADC_CSM_REG53, 0x24);  //20 original,, 24 for adc double speed
+		snd_soc_write(w->codec, ES8396_ADC_CLK_DIV_REG09, 0x08); //04 original, 08 for adc double speed
 		break;
 	default:
 		break;
@@ -743,10 +743,10 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
 		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
 		/* set adc alc */
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC9);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCa);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1b);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xdb);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x04);		
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x01);
 		if (es8396->dmic_amic == MIC_DMIC) {
@@ -755,12 +755,12 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(tron_codec, ES8396_SDP1_OUT_FMT_REG20, 0x00);
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
-		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
+		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x04);   //00 original, 04 for adc double speed
 		if (es8396->dmic_amic == MIC_DMIC) {
 		snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
-		snd_soc_write(tron_codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xA0);
+		snd_soc_write(tron_codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x90);
 		}
-		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08); //04 original, 08 for adc double speed
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 		
@@ -857,8 +857,8 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		#if 0
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
@@ -883,14 +883,14 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
-		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
+		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x04);   //00 original, 04 for adc double speed
 		/* force adc stm to normal */
 		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x40);
 		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x0);
 		/* ADC Volume =0db */
 		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
 		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
-		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08); //04 original, 08 for adc double speed
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 		#endif
@@ -947,8 +947,8 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 				/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x0a);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xC8);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
@@ -973,14 +973,14 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
-		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
+		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x04);   //00 original, 04 for adc double speed
 		/* force adc stm to normal */
 		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x40);
 		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x0);
 		/* ADC Volume =0db */
 		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
 		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
-		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);//04 original, 08 for adc double speed
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 		#endif
@@ -2900,10 +2900,10 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	if (playback) {
 		printk(">>>>>>>>>>>es8396_pcm_startup playback\n");
 		/* set adc alc */
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCa);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1A);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1b);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xdb);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
@@ -2930,17 +2930,18 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 
 		msleep(200);
 		/* ADC STM and Digital Startup, ADC DS Mode */
-		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x00);
+		snd_soc_write(tron_codec, ES8396_ADC_CSM_REG53, 0x04);   //00 original, 04 for adc double speed
 		/* force adc stm to normal */
 		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x40);
 		snd_soc_write(tron_codec, ES8396_ADC_FORCE_REG77, 0x0);
 		/* ADC Volume =0db */
 		snd_soc_write(tron_codec, ES8396_ADC_LADC_VOL_REG56, 0x0);
 		snd_soc_write(tron_codec, ES8396_ADC_RADC_VOL_REG57, 0x0);
-		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);  //04 original, 08 for adc double speed
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	} else {
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);  //04 original, 08 for adc double speed	
 		printk(">>>>>>>>>>>es8396_pcm_startup capture\n");			
 	}
 	return 0;
@@ -3155,7 +3156,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 	/* adc,dac,cphp,class d clk enable,from clk2 */
 	snd_soc_write(codec, ES8396_CLK_CTRL_REG08, 0x00);
 	/* adc clk ratio=1 */
-	snd_soc_write(codec, ES8396_ADC_CLK_DIV_REG09, 0x04);
+	snd_soc_write(codec, ES8396_ADC_CLK_DIV_REG09, 0x08);  //04 original, 08 for adc double speed
 	/* dac clk ratio=1 */
 	snd_soc_write(codec, ES8396_DAC_CLK_DIV_REG0A, 0x01);
 	snd_soc_write(codec, ES8396_BCLK_DIV_M2_REG0F, 0x24);
@@ -3187,10 +3188,10 @@ static int es8396_probe(struct snd_soc_codec *codec)
 	snd_soc_write(codec, ES8396_DAC_RAMP_RATE_REG67, 0x00);
 	/* enable adc and dac stm for calibrate */
 	snd_soc_write(codec, ES8396_DAC_CSM_REG66, 0x00);
-	snd_soc_write(codec, ES8396_ADC_CSM_REG53, 0x00);
+	snd_soc_write(codec, ES8396_ADC_CSM_REG53, 0x04);    //00 original, 04 for adc double speed
 	snd_soc_write(codec, ES8396_ADC_FORCE_REG77, 0x40);
 	snd_soc_write(codec, ES8396_ADC_FORCE_REG77, 0x00);
-	snd_soc_write(codec, ES8396_DLL_CTRL_REG0D, 0x00);
+	snd_soc_write(codec, ES8396_DLL_CTRL_REG0D, 0x01);  //00 original, 01 for dac and adc in different clock domain
 	msleep(100);
 	snd_soc_write(codec, ES8396_DAC_CSM_REG66, 0x00);
 	snd_soc_write(codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x00);
@@ -3211,7 +3212,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		snd_soc_write(codec, ES8396_SYS_MICBIAS_CTRL_REG74, value);
 	}
 
-	snd_soc_write(codec, ES8396_ADC_CSM_REG53, 0x20);
+	snd_soc_write(codec, ES8396_ADC_CSM_REG53, 0x24);   //20 original ,24 for double speed
 	snd_soc_write(codec, ES8396_ADC_PGA_GAIN_REG61, 0x33);
 	snd_soc_write(codec, ES8396_ADC_MICBOOST_REG60, 0x22);
 	if (es8396->dmic_amic == MIC_AMIC)
@@ -3219,7 +3220,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0x00);
 	else
 		/*use digital mic */
-		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xA0);
+		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xa0); // to get DMIC data at SDA2 Pin
 
 	/*Enable HPF, LDATA= LADC, RDATA = LADC */
 	snd_soc_write(codec, ES8396_ADC_HPF_COMP_DASEL_REG55, 0x30);

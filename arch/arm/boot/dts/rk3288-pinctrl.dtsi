@@ -535,7 +535,7 @@
 			i2s_mclk:i2s-mclk {
 				rockchip,pins = <I2S_CLK>;
 				rockchip,pull = <VALUE_PULL_DISABLE>;
-				rockchip,drive = <VALUE_DRV_DEFAULT>;
+				rockchip,drive = <VALUE_DRV_8MA>;
 				//rockchip,tristate = <VALUE_TRI_DEFAULT>;
 
 			};
