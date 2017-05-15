@@ -2384,6 +2384,7 @@ if (di->ac_in == 1 || di->usb_in ==1 || di->dc_in ==1)
 	shutdown_charge = 1;
 
 	if (dbg_enable != prev_dbg_enable) {
+	    rk818_bat_dump_regs(di, RK818_VB_MON_REG, RK818_DEVCTRL_REG);
 	    rk818_bat_dump_regs(di, RK818_CHRG_COMP_REG1, RK818_MISC_MARK_REG);
 	    prev_dbg_enable = dbg_enable;
 	}
