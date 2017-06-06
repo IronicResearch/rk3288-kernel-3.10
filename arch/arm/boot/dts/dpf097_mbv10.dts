@@ -443,7 +443,7 @@
 		status = "okay";
  	};
 
-/**/
+/* FIXME */
 	eup3265b: eup3265b@10 {
 		compatible = "eup,eup3265";
 		reg = <0x10>;
@@ -471,7 +471,7 @@
 	};
 
 
-
+/*
 	eup3265: eup3265@1c {
 		compatible = "eup,eup3265";
 		reg = <0x1c>;
@@ -497,7 +497,7 @@
 			};
 		   };
 	};
-/**/
+*/
 };
 
 &i2c1 {
