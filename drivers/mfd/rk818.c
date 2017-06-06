@@ -1254,6 +1254,12 @@ void rk818_device_shutdown(void)
 				tmp = 1;
 			}
 
+			#if 0
+			printk("...power button = %d\n", tmp);
+			printk("...rebooting...\n");
+			return;
+			#endif
+
 			if (jiffies_to_msecs(jiffies-shutdown_jiffies)>2500 || shutdown_charge == 0 ){
 				printk("xwp.......dpf097 shutdown  charging..... %d\n",shutdown_charge);
 				for (i = 0; i < 10; i++) {
@@ -1348,6 +1354,9 @@ static int rk818_pre_init(struct rk818 *rk818)
 	ret = rk818_set_bits(rk818, 0xa1,(0x7<<4),(0x7<<4)); //close charger when usb low then 3.4V
 	ret = rk818_set_bits(rk818, 0x52,(0x1<<1),(0x1<<1)); //no action when vref
 	ret = rk818_set_bits(rk818, 0x52,(0x1<<0),(0x1<<0)); //enable HDMI 5V
+
+	// enable poweroff + restart on long power button press
+	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x50);
 
 	/*******enable switch and boost***********/
 	val = rk818_reg_read(rk818,RK818_DCDC_EN_REG);
