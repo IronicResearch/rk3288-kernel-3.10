@@ -436,11 +436,14 @@
 
 &i2c0 {
 	status = "okay";
+	rockchip,no-suspend = <1>;
 
 	rk818: rk818@1c {
 		reg = <0x1c>;
 		status = "okay";
  	};
+
+/**/
 	eup3265b: eup3265b@10 {
 		compatible = "eup,eup3265";
 		reg = <0x10>;
@@ -494,6 +497,7 @@
 			};
 		   };
 	};
+/**/
 };
 
 &i2c1 {

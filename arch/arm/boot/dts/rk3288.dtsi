@@ -656,6 +656,7 @@
 			<&gpio0 GPIO_C0 GPIO_ACTIVE_LOW>;
 		clocks = <&clk_gates10 2>;
 		rockchip,check-idle = <1>;
+		rockchip,no-suspend = <0>;
 		status = "disabled";
 	};
 
@@ -672,6 +673,7 @@
 			<&gpio8 GPIO_A5 GPIO_ACTIVE_LOW>;
 		clocks = <&clk_gates6 13>;
 		rockchip,check-idle = <1>;
+		rockchip,no-suspend = <0>;
 		status = "disabled";
 	};
 
@@ -688,6 +690,7 @@
 			<&gpio6 GPIO_B2 GPIO_ACTIVE_LOW>;
 		clocks = <&clk_gates10 3>;
 		rockchip,check-idle = <1>;
+		rockchip,no-suspend = <0>;
 		status = "disabled";
 	};
 
@@ -704,6 +707,7 @@
 			<&gpio2 GPIO_C0 GPIO_ACTIVE_LOW>;
 		clocks = <&clk_gates6 14>;
 		rockchip,check-idle = <1>;
+		rockchip,no-suspend = <0>;
 		status = "disabled";
 	};
 
@@ -720,6 +724,7 @@
 			<&gpio7 GPIO_C2 GPIO_ACTIVE_LOW>;
 		clocks = <&clk_gates6 15>;
 		rockchip,check-idle = <1>;
+		rockchip,no-suspend = <0>;
 		status = "disabled";
 	};
 
@@ -736,6 +741,7 @@
 			<&gpio7 GPIO_C4 GPIO_ACTIVE_LOW>;
 		clocks = <&clk_gates7 0>;
 		rockchip,check-idle = <1>;
+		rockchip,no-suspend = <0>;
 		status = "disabled";
 	};
 

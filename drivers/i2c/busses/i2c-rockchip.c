@@ -105,6 +105,8 @@ struct rockchip_i2c {
 	unsigned int		check_idle;
 	int			sda_gpio, scl_gpio;
 	struct pinctrl_state	*gpio_state;
+
+	unsigned int		no_suspend;
 };
 
 #define COMPLETE_READ      (1<<STATE_START | 1<<STATE_READ  | 1<<STATE_STOP)
@@ -906,6 +908,10 @@ static int rockchip_i2c_probe(struct platform_device *pdev)
 		pinctrl_select_state(i2c->dev->pins->p, i2c->dev->pins->default_state);
 	}
 
+	i2c->no_suspend = 0;
+	of_property_read_u32(np, "rockchip,no-suspend", &i2c->no_suspend);
+	dev_info(&pdev->dev, "no_suspend = %d\n", i2c->no_suspend);
+
 	/* setup info block for the i2c core */
 	ret = i2c_add_adapter(&i2c->adap);
 	if (ret < 0) {
@@ -984,6 +990,9 @@ static int rockchip_i2c_suspend_noirq(struct device *dev)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct rockchip_i2c *i2c = platform_get_drvdata(pdev);
 
+	if (i2c->no_suspend)
+		return 0;
+
 	mutex_lock(&i2c->suspend_lock);
 	i2c->suspended = 1;
 	pinctrl_pm_select_sleep_state(dev);
@@ -996,6 +1005,9 @@ static int rockchip_i2c_resume_noirq(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct rockchip_i2c *i2c = platform_get_drvdata(pdev);
+
+	if (i2c->no_suspend)
+		return 0;
 
 	mutex_lock(&i2c->suspend_lock);
 	pinctrl_pm_select_default_state(dev);
@@ -1046,6 +1058,8 @@ static void rockchip_i2c_shutdown(void)
 		return;
 
 	for (i = 0; i < data->num; i++) {
+		if (data->map[i]->no_suspend)
+			continue;
 		mutex_lock(&data->map[i]->suspend_lock);
 		data->map[i]->suspended = 1;
 		mutex_unlock(&data->map[i]->suspend_lock);
