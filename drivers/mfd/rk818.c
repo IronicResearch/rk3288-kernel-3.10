@@ -1254,7 +1254,7 @@ void rk818_device_shutdown(void)
 				tmp = 1;
 			}
 
-			#if 0
+			#if 1
 			printk("...power button = %d\n", tmp);
 			printk("...rebooting...\n");
 			return;

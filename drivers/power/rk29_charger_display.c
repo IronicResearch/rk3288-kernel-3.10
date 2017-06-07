@@ -117,18 +117,22 @@ static int  __init start_charge_logo_display(void)
 		val_status.intval = POWER_SUPPLY_STATUS_CHARGING;
 
 	val_capacity.intval = rk_get_system_battery_capacity();
+
+	printk(" xwp power in charge mode %d %d  %d\n\n",rockchip_boot_mode(),val_capacity.intval,pwr_on_thrsd);
+
+#if 1
 	// low power   and  discharging
-#if 0
 	if((val_capacity.intval < pwr_on_thrsd )&&(val_status.intval != POWER_SUPPLY_STATUS_CHARGING))
 	{
 		printk("low power\n");
-		kernel_power_off();
-		while(1);
+		add_bootmode_charger_to_cmdline(1);
+//		kernel_power_off();
+//		while(1);
 		return 0;
 	}
 #endif
 
-			printk(" xwp power in charge mode %d %d  %d\n\n",rockchip_boot_mode(),val_capacity.intval,pwr_on_thrsd);
+#if 0
 	if(val_status.intval == POWER_SUPPLY_STATUS_CHARGING)
 	{
 		if ((rockchip_boot_mode() == BOOT_MODE_CHARGE ||(rockchip_boot_mode() == BOOT_MODE_NORMAL) ) && (val_capacity.intval <= pwr_on_thrsd))
@@ -139,6 +143,7 @@ static int  __init start_charge_logo_display(void)
             return 0;
 	   }
 	}
+#endif
 
 	add_bootmode_charger_to_cmdline(0);
 	return 0;
