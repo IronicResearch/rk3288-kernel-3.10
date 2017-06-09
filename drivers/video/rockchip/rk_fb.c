@@ -553,6 +553,11 @@ int rk_fb_calc_fps(struct rk_screen *screen, u32 pixclock)
 	y = screen->mode.yres + screen->mode.upper_margin +
 	    screen->mode.lower_margin + screen->mode.vsync_len;
 
+	printk("%s: ht=%d, hx=%d, hf=%d, hs=%d, hb=%d\n", __func__,
+		x, screen->mode.xres, screen->mode.left_margin, screen->mode.hsync_len, screen->mode.right_margin);
+	printk("%s: vt=%d, vy=%d, vf=%d, vs=%d, vb=%d\n", __func__,
+		y, screen->mode.yres, screen->mode.upper_margin, screen->mode.vsync_len, screen->mode.lower_margin);
+
 	hz = 1000000000000ULL;	/* 1e12 picoseconds per second */
 
 	hz += (x * y) / 2;
@@ -560,6 +565,8 @@ int rk_fb_calc_fps(struct rk_screen *screen, u32 pixclock)
 
 	hz += pixclock / 2;
 	do_div(hz, pixclock);	/* divide by pixclock with rounding */
+
+	printk("%s: x=%d, y=%d, hz=%lld, pixclk=%u\n", __func__, x, y, hz, pixclock);
 
 	return hz;
 }

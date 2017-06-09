@@ -595,6 +595,17 @@
 	rockchip,uboot-logo-on = <1>;
 };
 
+&disp_timings {
+	timing0 {
+		hsync-len = <16>;
+		hback-porch = <88>;
+		hfront-porch = <80>;
+		vsync-len = <4>;
+		vback-porch = <8>;
+		vfront-porch = <8>;
+	};
+};
+
 &rk_screen {
 	 display-timings = <&disp_timings>;
 };
