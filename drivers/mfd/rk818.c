@@ -1263,6 +1263,7 @@ void rk818_device_shutdown(void)
 			return;
 			#endif
 
+			#if 0
 			if (jiffies_to_msecs(jiffies-shutdown_jiffies)>2500 || shutdown_charge == 0 ){
 				printk("xwp.......dpf097 shutdown  charging..... %d\n",shutdown_charge);
 				for (i = 0; i < 10; i++) {
@@ -1280,6 +1281,7 @@ void rk818_device_shutdown(void)
 				}
 				break;
 			}
+			#endif
 			msleep(200);
 		}
 
@@ -1358,7 +1360,7 @@ static int rk818_pre_init(struct rk818 *rk818)
 	ret = rk818_set_bits(rk818, 0x52,(0x1<<0),(0x1<<0)); //enable HDMI 5V
 
 	// enable poweroff + restart on long power button press
-	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x50);
+	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x40);
 
 	// log previous poweroff state
 	val = rk818_reg_read(rk818, 0xAF); // RK818_OFF_SOURCE_REG
