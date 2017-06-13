@@ -1034,11 +1034,11 @@ out:
 EXPORT_SYMBOL_GPL(rk818_clear_bits);
 
 #if 1
+static u8 regAddr = 0xAF; // RK818_OFF_SOURCE_REG;
 static ssize_t rk818_test_store(struct kobject *kobj, struct kobj_attribute *attr,
                                 const char *buf, size_t n)
 {
     u32 getdata[8];
-    u8 regAddr;
     u8 data;
     char cmd;
     const char *buftmp = buf;
@@ -1056,19 +1056,19 @@ static ssize_t rk818_test_store(struct kobject *kobj, struct kobj_attribute *att
 		sscanf(buftmp, "%c %x %x ", &cmd, &getdata[0], &getdata[1]);
 		regAddr = (u8)(getdata[0] & 0xff);
 		data = (u8)(getdata[1] & 0xff);
-		printk("get value = %x\n", data);
+		printk("CMD : %c %02x %02x\n", cmd, getdata[0], getdata[1]);
 
 		rk818_i2c_write(rk818, regAddr, 1, data);
 		rk818_i2c_read(rk818, regAddr, 1, &data);
-		printk("%x   %x\n", getdata[1], data);
+		printk("%02x: %02x\n", regAddr, data);
 		break;
 	case 'r':
 		sscanf(buftmp, "%c %x ", &cmd, &getdata[0]);
-		printk("CMD : %c %x\n", cmd, getdata[0]);
+		printk("CMD : %c %02x\n", cmd, getdata[0]);
 
 		regAddr = (u8)(getdata[0] & 0xff);
 		rk818_i2c_read(rk818, regAddr, 1, &data);
-		printk("%x %x\n", getdata[0], data);
+		printk("%02x: %02x\n", regAddr, data);
 		break;
 	default:
 		printk("Unknown command\n");
@@ -1080,10 +1080,12 @@ static ssize_t rk818_test_store(struct kobject *kobj, struct kobj_attribute *att
 static ssize_t rk818_test_show(struct kobject *kobj, struct kobj_attribute *attr,
                                char *buf)
 {
-   char *s = buf;
-    buf = "hello";
-    return sprintf(s, "%s\n", buf);
+    u8 data;
+    struct rk818 *rk818 = g_rk818;
 
+    rk818_i2c_read(rk818, regAddr, 1, &data);
+    printk("%02x: %02x\n", regAddr, data);
+    return sprintf(buf, "%02x: %02x\n", regAddr, data);
 }
 
 static struct kobject *rk818_kobj;
@@ -1224,6 +1226,7 @@ void rk818_device_shutdown(void)
 	int ret, i;
 	u8 reg = 0;
 	struct rk818 *rk818 = g_rk818;
+
 	if (shutdown_charge == 0){
 
 		for (i = 0; i < 10; i++) {
@@ -1260,10 +1263,10 @@ void rk818_device_shutdown(void)
 			return;
 			#endif
 
+			#if 0
 			if (jiffies_to_msecs(jiffies-shutdown_jiffies)>2500 || shutdown_charge == 0 ){
 				printk("xwp.......dpf097 shutdown  charging..... %d\n",shutdown_charge);
 				for (i = 0; i < 10; i++) {
-
 
 					pr_info("%s\n", __func__);
 					ret = rk818_i2c_read(rk818, RK818_DEVCTRL_REG, 1, &reg);
@@ -1278,6 +1281,7 @@ void rk818_device_shutdown(void)
 				}
 				break;
 			}
+			#endif
 			msleep(200);
 		}
 
@@ -1356,7 +1360,13 @@ static int rk818_pre_init(struct rk818 *rk818)
 	ret = rk818_set_bits(rk818, 0x52,(0x1<<0),(0x1<<0)); //enable HDMI 5V
 
 	// enable poweroff + restart on long power button press
-	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x50);
+	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x40);
+
+	// log previous poweroff state
+	val = rk818_reg_read(rk818, 0xAF); // RK818_OFF_SOURCE_REG
+	printk("%s: power off state 0xAF: %02x\n", __func__, val);
+	val = rk818_reg_read(rk818, 0xAE); // RK818_ON_SOURCE_REG
+	printk("%s: power on  state 0xAE: %02x\n", __func__, val);
 
 	/*******enable switch and boost***********/
 	val = rk818_reg_read(rk818,RK818_DCDC_EN_REG);
