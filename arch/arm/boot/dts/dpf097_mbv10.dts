@@ -595,6 +595,7 @@
 	rockchip,uboot-logo-on = <1>;
 };
 
+/* FIXME: 60 Hz blanking
 &disp_timings {
 	timing0 {
 		hsync-len = <16>;
@@ -605,6 +606,7 @@
 		vfront-porch = <8>;
 	};
 };
+*/
 
 &rk_screen {
 	 display-timings = <&disp_timings>;
