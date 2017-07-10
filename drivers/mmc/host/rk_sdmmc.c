@@ -1914,6 +1914,7 @@ static void dw_mci_post_tmo(struct mmc_host *mmc)
 	unsigned long timeout = 0;
 	bool ret_timeout = true;
 	u32 opcode, int_val;
+	int retry = 0;
 
 	/* unmask irq */
 	int_val = mci_readl(host, INTMASK);
@@ -1960,7 +1961,7 @@ retry_stop:
 			break;
 	}
 
-	if (false == ret_timeout) {
+	if (false == ret_timeout && ++retry < 10) {
 		MMC_DBG_ERR_FUNC(host->mmc, "stop cmd recovery failed![%s]",
 				 mmc_hostname(host->mmc));
 		/* pd_peri mmc AHB bus software reset request */
@@ -1968,7 +1969,7 @@ retry_stop:
 		goto retry_stop;
 	}
 
-	if (!dw_mci_ctrl_all_reset(host)) {
+	if (!dw_mci_ctrl_all_reset(host) && ++retry < 20) {
 		MMC_DBG_ERR_FUNC(host->mmc, "all reset recovery failed![%s]",
 				 mmc_hostname(host->mmc));
 		/* pd_peri mmc AHB bus software reset request */
