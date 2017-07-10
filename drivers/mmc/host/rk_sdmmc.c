@@ -1914,6 +1914,7 @@ static void dw_mci_post_tmo(struct mmc_host *mmc)
 	unsigned long timeout = 0;
 	bool ret_timeout = true;
 	u32 opcode, int_val;
+	int retry = 0;
 
 	/* unmask irq */
 	int_val = mci_readl(host, INTMASK);
@@ -1965,7 +1966,8 @@ retry_stop:
 				 mmc_hostname(host->mmc));
 		/* pd_peri mmc AHB bus software reset request */
 		rockchip_mmc_reset_controller(host->reset);
-		goto retry_stop;
+		if (++retry < 10)
+			goto retry_stop;
 	}
 
 	if (!dw_mci_ctrl_all_reset(host)) {
@@ -1973,7 +1975,8 @@ retry_stop:
 				 mmc_hostname(host->mmc));
 		/* pd_peri mmc AHB bus software reset request */
 		rockchip_mmc_reset_controller(host->reset);
-		goto retry_stop;
+		if (++retry < 20)
+			goto retry_stop;
 	}
 
 #ifdef CONFIG_MMC_DW_IDMAC
