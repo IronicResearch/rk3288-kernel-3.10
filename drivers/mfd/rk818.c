@@ -1360,7 +1360,7 @@ static int rk818_pre_init(struct rk818 *rk818)
 	ret = rk818_set_bits(rk818, 0x52,(0x1<<0),(0x1<<0)); //enable HDMI 5V
 
 	// enable poweroff + restart on long power button press
-	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x40);
+	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x70);
 
 	// log previous poweroff state
 	val = rk818_reg_read(rk818, 0xAF); // RK818_OFF_SOURCE_REG
