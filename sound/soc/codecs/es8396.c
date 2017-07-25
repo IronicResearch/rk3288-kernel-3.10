@@ -2941,12 +2941,27 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	} else {
-		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);  //04 original, 08 for adc double speed	
+		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);//04 original, 08 for adc double speed	
+    snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
 		printk(">>>>>>>>>>>es8396_pcm_startup capture\n");			
 	}
 	return 0;
 }
 
+static int es8396_pcm_shutdown(struct snd_pcm_substream *substream,
+			      struct snd_soc_dai *dai)
+{
+	bool playback = (substream->stream == SNDRV_PCM_STREAM_PLAYBACK);	
+	struct snd_soc_codec *codec = dai->codec;
+	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(codec);	
+	if (playback) {
+		printk(">>>>>>>>>>>es8396_pcm_shutdown playback\n");	
+	} else {		
+    snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0x72);
+		printk(">>>>>>>>>>>es8396_pcm_shutdown capture\n");			
+	}
+	return 0;
+}
 /*
  * Only mute SDP IN(for dac)
  */
@@ -3001,6 +3016,7 @@ static int es8396_aif_mute(struct snd_soc_dai *codec_dai, int mute)
 
 static const struct snd_soc_dai_ops es8396_aif1_dai_ops = {
 	.startup = es8396_pcm_startup,
+	.shutdown = es8396_pcm_shutdown,
 	.set_sysclk = es8396_set_dai_sysclk,
 	.set_fmt = es8396_set_dai_fmt,
 	.hw_params = es8396_pcm_hw_params,
@@ -3011,6 +3027,7 @@ static const struct snd_soc_dai_ops es8396_aif1_dai_ops = {
 
 static const struct snd_soc_dai_ops es8396_aif2_dai_ops = {
 	.startup = es8396_pcm_startup,
+	.shutdown = es8396_pcm_shutdown,
 	.set_sysclk = es8396_set_dai_sysclk,
 	.set_fmt = es8396_set_dai_fmt,
 	.hw_params = es8396_pcm_hw_params,
@@ -3230,7 +3247,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 	 */
 
 	/* gpio 2 for irq, AINL as irq src, gpio1 for dmic clk */
-	snd_soc_write(codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
+	snd_soc_write(codec, ES8396_ALRCK_GPIO_SEL_REG15, 0x00);
 	snd_soc_write(codec, ES8396_DAC_JACK_DET_COMP_REG69, 0x00);
 	if (es8396->jackdet_enable == 1) {
 		/* jack detection from AINL pin, AINL=0, HP Insert */
