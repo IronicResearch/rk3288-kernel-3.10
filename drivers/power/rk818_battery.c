@@ -3263,7 +3263,7 @@ static void rk818_bat_update_temperature(struct rk818_battery *di)
 {
 	u32 ntc_size, *ntc_table;
 	int i, res;
-
+    u8 chrg_ctrl2;
 	ntc_table = di->pdata->ntc_table;
 	ntc_size = di->pdata->ntc_size;
 	di->temperature = VIRTUAL_TEMPERATURE;
@@ -3271,16 +3271,23 @@ static void rk818_bat_update_temperature(struct rk818_battery *di)
 	if (ntc_size) {
 		res = rk818_bat_get_ntc_res(di);
 		if (res < ntc_table[ntc_size - 1]) {
-			BAT_INFO("bat ntc upper max degree: R=%d\n", res);
+            chrg_ctrl2 = (0 << 7) & ((di->chrg_vol_sel | di->chrg_cur_sel));
+            rk818_bat_write(di, RK818_CHRG_CTRL_REG1, chrg_ctrl2);
+			printk("bat ntc upper max degree: R=%d\n", res);
 		} else if (res > ntc_table[0]) {
-			BAT_INFO("bat ntc lower min degree: R=%d\n", res);
+            chrg_ctrl2 = (0 << 7) & ((di->chrg_vol_sel | di->chrg_cur_sel));
+            rk818_bat_write(di, RK818_CHRG_CTRL_REG1, chrg_ctrl2);
+			printk("bat ntc lower min degree: R=%d\n", res);
 		} else {
 			for (i = 0; i < ntc_size; i++) {
 				if (res >= ntc_table[i])
 					break;
 			}
+            chrg_ctrl2 = (1 << 7) | (di->chrg_vol_sel | di->chrg_cur_sel);
+            rk818_bat_write(di, RK818_CHRG_CTRL_REG1, chrg_ctrl2);
 			di->temperature = (i + di->pdata->ntc_degree_from) * 10;
-		}
+            
+            }
 	}
 }
 
