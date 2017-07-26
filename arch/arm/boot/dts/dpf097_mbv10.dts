@@ -239,6 +239,14 @@
         chosen {
                 bootargs = "vmalloc=512M";
         };
+
+	board_id {
+		compatible = "rockchip,rk818";
+		bid0 = <&gpio3 GPIO_D2 GPIO_ACTIVE_HIGH>;
+		bid1 = <&gpio3 GPIO_D3 GPIO_ACTIVE_HIGH>;
+		bid2 = <&gpio3 GPIO_D4 GPIO_ACTIVE_HIGH>;
+		bid3 = <&gpio3 GPIO_D5 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &gmac {
