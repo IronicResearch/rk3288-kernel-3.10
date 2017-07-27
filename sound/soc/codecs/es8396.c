@@ -3240,7 +3240,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		snd_soc_write(codec, ES8396_ADC_DMIC_RAMPRATE_REG54, 0xa0); // to get DMIC data at SDA2 Pin
 
 	/*Enable HPF, LDATA= LADC, RDATA = LADC */
-	snd_soc_write(codec, ES8396_ADC_HPF_COMP_DASEL_REG55, 0x30);
+	snd_soc_write(codec, ES8396_ADC_HPF_COMP_DASEL_REG55, 0x33); // swap left/right ADC
 
 	/*
 	 * setup hp detection
