@@ -303,6 +303,25 @@
 				rockchip,pull = <VALUE_PULL_UP>;
 			};
 		};
+
+	gpio3_gpio {
+			gpio3_d2: gpio3-d2 {
+				rockchip,pins = <GPIO3_D2>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			gpio3_d3: gpio3-d3 {
+				rockchip,pins = <GPIO3_D3>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			gpio3_d4: gpio3-d4 {
+				rockchip,pins = <GPIO3_D4>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			gpio2_d5: gpio3-d5 {
+				rockchip,pins = <GPIO3_D5>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+		};
 };
 
 &nandc0 {
