@@ -1026,6 +1026,13 @@ static const DECLARE_TLV_DB_SCALE(dig_tlv, 0, 600, 0);
 /* 0db min scalem 0.75db steps, no mute */
 static const DECLARE_TLV_DB_SCALE(vdac_tlv, -9600, 50, 0);
 
+/* -6.5db min by 1.5db steps */
+static const DECLARE_TLV_DB_SCALE(max_gain_tlv, -650, 150, 0);
+/* -12db min by 1.5db steps */
+static const DECLARE_TLV_DB_SCALE(min_gain_tlv, -1200, 150, 0);
+/* -16.5db min by 1.5db steps */
+static const DECLARE_TLV_DB_SCALE(alc_level_tlv, -1650, 150, 0);
+
 static const char *const alc_func_txt[] = { "Off", "LOn", "ROn", "StereoOn" };
 
 static const struct soc_enum alc_func =
@@ -1039,13 +1046,13 @@ static const struct snd_kcontrol_new es8396_snd_controls[] = {
 			 ES8396_DAC_LDAC_VOL_REG6A, ES8396_DAC_RDAC_VOL_REG6B,
 			 0, 127, 1, vdac_tlv),
 	SOC_DOUBLE_TLV("MNIN MIXER Volume",
-		       ES8396_MN_MIXER_VOL_REG38, 4, 0, 3, 1, mixvol_tlv),
+		       ES8396_MN_MIXER_VOL_REG38, 4, 0, 11, 0, mixvol_tlv),
 
 	SOC_DOUBLE_TLV("LIN MIXER Volume",
-		       ES8396_LN_MIXER_VOL_REG34, 4, 0, 4, 0, mixvol_tlv),
+		       ES8396_LN_MIXER_VOL_REG34, 4, 0, 11, 0, mixvol_tlv),
 
 	SOC_DOUBLE_TLV("AXIN MIXER Volume",
-		       ES8396_AX_MIXER_VOL_REG30, 4, 0, 4, 0, mixvol_tlv),
+		       ES8396_AX_MIXER_VOL_REG30, 4, 0, 11, 0, mixvol_tlv),
 	SOC_DOUBLE_TLV("Mic Boost Volume",
 		       ES8396_ADC_MICBOOST_REG60, 4, 0, 3, 0, boost_tlv),
 
@@ -1076,6 +1083,14 @@ static const struct snd_kcontrol_new es8396_snd_controls[] = {
 		       ES8396_MONOHP_P_BOOST_MUTE_REG48, 3, 1, 1, lineout_tlv),
 	SOC_SINGLE_TLV("Monooutn Playback Volume",
 		       ES8396_MONOHP_N_BOOST_MUTE_REG49, 3, 1, 1, lineout_tlv),
+
+	/* ALC control registers */
+	SOC_SINGLE_TLV("ALC Maximum Gain",
+		       ES8396_ADC_ALC_CTRL_4_REG5B, 0, 28, 0, max_gain_tlv),
+	SOC_SINGLE_TLV("ALC Minimum Gain",
+		       ES8396_ADC_ALC_CTRL_5_REG5C, 0, 28, 0, min_gain_tlv),
+	SOC_SINGLE_TLV("ALC Target Level",
+		       ES8396_ADC_ALC_CTRL_1_REG58, 0, 15, 0, alc_level_tlv),
 	SOC_ENUM("ALC Capture Function", alc_func),
 };
 
