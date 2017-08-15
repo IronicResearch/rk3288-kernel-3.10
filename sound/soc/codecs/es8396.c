@@ -3308,8 +3308,8 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCA);	// ALC on, level = -3 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1B);	// ALC max gain = +34 db
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xDB);	// ALC min gain = +28.5 db
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x12);	// ALC max gain = +20.5 db
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD1);	// ALC min gain = +13.5 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
