@@ -2958,10 +2958,17 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	if (playback) {
 		printk(">>>>>>>>>>>es8396_pcm_startup playback\n");
+	#if 2
+		for (index = 0; index < 40; index++) {
+			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+				      es8396_equalizer_for_zed2[index]);
+		}
+	#else
 		for (index = 0; index < 20; index++) {
 			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
 				      es8396_equalizer_for_zed1[index]);
 		}
+	#endif
 		snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x00);		
 		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x40);
 
