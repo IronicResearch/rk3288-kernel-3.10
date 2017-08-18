@@ -571,8 +571,9 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 		/* set adc alc */
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCa);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x1b);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xdb);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_3_REG5A, 0x00);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x12);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xd1);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x05);
 		snd_soc_write(w->codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x00);
 		
@@ -1034,6 +1035,8 @@ static const DECLARE_TLV_DB_SCALE(max_gain_tlv, -650, 150, 0);
 static const DECLARE_TLV_DB_SCALE(min_gain_tlv, -1200, 150, 0);
 /* -16.5db min by 1.5db steps */
 static const DECLARE_TLV_DB_SCALE(alc_level_tlv, -1650, 150, 0);
+/* -76.5db min by 1.5db steps */
+static const DECLARE_TLV_DB_SCALE(alc_noise_tlv, -7650, 150, 0);
 
 static const char *const alc_func_txt[] = { "Off", "LOn", "ROn", "StereoOn" };
 
@@ -1094,6 +1097,17 @@ static const struct snd_kcontrol_new es8396_snd_controls[] = {
 	SOC_SINGLE_TLV("ALC Target Level",
 		       ES8396_ADC_ALC_CTRL_1_REG58, 0, 15, 0, alc_level_tlv),
 	SOC_ENUM("ALC Capture Function", alc_func),
+	SOC_SINGLE("ALC Attack",
+		       ES8396_ADC_ALC_CTRL_2_REG59, 0, 10, 0),
+	SOC_SINGLE("ALC Decay",
+		       ES8396_ADC_ALC_CTRL_2_REG59, 4, 10, 0),
+	SOC_SINGLE("ALC Hold",
+		       ES8396_ADC_ALC_CTRL_3_REG5A, 0, 10, 0),
+	SOC_DOUBLE_R("ALC Window Size (H,L)",
+		       ES8396_ADC_ALC_CTRL_4_REG5B,
+		       ES8396_ADC_ALC_CTRL_5_REG5C, 5, 7, 0),
+	SOC_SINGLE_TLV("ALC Noise Gate Threshold",
+		       ES8396_ADC_ALC_CTRL_6_REG5D, 3, 31, 0, alc_noise_tlv),
 };
 
 /*
@@ -3308,6 +3322,7 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCA);	// ALC on, level = -3 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_3_REG5A, 0x00);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x12);	// ALC max gain = +20.5 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD1);	// ALC min gain = +13.5 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x05);	// ALC noise gate enable
