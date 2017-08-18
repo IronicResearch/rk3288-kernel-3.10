@@ -182,6 +182,34 @@ static u8 es8396_equalizer_lpf_bt_incall[] = {
 0x7D, 0x61, 0x4B, 0x23, 0x7C, 0xE7, 0x53, 0x29, 
 };
 
+static u8 es8396_equalizer_for_zed[] = {
+0xBE, 0x71, 0x75, 0x02, 0xAF, 0xED, 0x64, 0x00, 0xBE, 0x71, 0x75, 0x02,
+0x6D, 0xEB, 0x2B, 0x20, 0xBE, 0xE5, 0x53, 0x25, 
+0xFF, 0xB5, 0x65, 0x01, 0x9F, 0xEB, 0x02, 0x21, 0xFF, 0xB5, 0x65, 0x01,
+0xDF, 0xA9, 0x0A, 0x00, 0xFF, 0xAD, 0x5C, 0x20,
+0xFF, 0xF1, 0x63, 0x01, 0x7F, 0xD9, 0x02, 0x21, 0xFF, 0xF1, 0x63, 0x01,
+0x4B, 0x9B, 0x0A, 0x00, 0x8D, 0x2F, 0x5B, 0x20,
+0x0B, 0xFB, 0xD8, 0x21, 0x01, 0x1F, 0x3A, 0x20,
+};
+/*high pass pass band width 400HZ,stop band width 100HZ*/ 
+static u8 es8396_equalizer_for_zed1[] = {
+0x5B,0xE5,0x53,0x01,0x1A,0x59,0x02,0x21,0x5B,0xE5,0x53,0x01,
+0x0B,0x1B,0x0A,0x00,0x2B,0x23,0x4B,0x20,
+};
+
+/*filter1:high pass pass band width 200HZ,stop band width 60HZ
+	filter2:low pass pass band width 16000HZ,stop band width 20000HZ
+*/ 
+
+static u8 es8396_equalizer_for_zed2[] = {
+0xAF,0xAD,0x64,0x01,0x5C,0xE3,0x02,0x21,0xAF,0xAD,
+0x64,0x01,0x4D,0xA1,0x0A,0x00,0x5B,0x65,0x5C,0x20,
+0x4D,0x9F,0x32,0x02,0x2C,0x1B,0x22,0x00,0x4D,0x9F,
+0x32,0x02,0xE9,0x5A,0x22,0x21,0x9D,0x65,0x4C,0x22,
+};
+
+
+
 struct sp_config {
 	u8 spc, mmcc, spfs;
 	u32 srate;
@@ -2922,7 +2950,7 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	bool playback = (substream->stream == SNDRV_PCM_STREAM_PLAYBACK);
 	int ret;
 	int regv;
-
+  unsigned int index;
 	struct snd_soc_codec *codec = dai->codec;
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(codec);
 	printk(">>>>>>>>es8396_pcm_startup\n");
@@ -2930,6 +2958,13 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	if (playback) {
 		printk(">>>>>>>>>>>es8396_pcm_startup playback\n");
+		for (index = 0; index < 20; index++) {
+			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+				      es8396_equalizer_for_zed1[index]);
+		}
+		snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x00);		
+		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x40);
+
 	#if 0
 		/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCa);
@@ -2939,6 +2974,7 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x11);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
+	#endif
 
 		/*axMixer Gain boost */
 		regv = snd_soc_read(tron_codec, ES8396_AX_MIXER_BOOST_REG2F);
@@ -2972,10 +3008,24 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);  //04 original, 08 for adc double speed
 		ret = snd_soc_read(tron_codec, ES8396_ADC_CSM_REG53);
 		printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
-	#endif
 	} else {
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);//04 original, 08 for adc double speed	
     snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
+    snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x33);
+    snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x00);
+		for (index = 0; index < 59; index++) {
+			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+				      es8396_equalizer_for_zed[index]);
+		}
+		snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
+		snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+			      es8396_equalizer_for_zed[59]);
+		snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x3c);
+		for (index = 60; index < 68; index++) {
+			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+				      es8396_equalizer_for_zed[index]);		
+		}
+		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x04);
 		printk(">>>>>>>>>>>es8396_pcm_startup capture\n");			
 	}
 	return 0;
