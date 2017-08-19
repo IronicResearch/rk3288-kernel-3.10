@@ -267,6 +267,8 @@ struct es8396_private {
 	struct mutex init_cali_mlock;
 	struct delayed_work init_cali_work;
 	int pcm_pop_work_retry;
+
+	bool is_recording;
 };
 
 static bool es8396_valid_micbias(u8 micbias)
@@ -2958,6 +2960,9 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	printk("ES8396_ADC_CSM_REG53===0x%x\n", ret);
 	if (playback) {
 		printk(">>>>>>>>>>>es8396_pcm_startup playback\n");
+
+	    if (!es8396->is_recording) {
+		snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x00);
 	#if 2
 		for (index = 0; index < 40; index++) {
 			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
@@ -2971,6 +2976,7 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	#endif
 		snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x00);		
 		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x40);
+	    }
 
 	#if 0
 		/* set adc alc */
@@ -3033,6 +3039,7 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 				      es8396_equalizer_for_zed[index]);		
 		}
 		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x04);
+		es8396->is_recording = true;
 		printk(">>>>>>>>>>>es8396_pcm_startup capture\n");			
 	}
 	return 0;
@@ -3048,6 +3055,7 @@ static int es8396_pcm_shutdown(struct snd_pcm_substream *substream,
 		printk(">>>>>>>>>>>es8396_pcm_shutdown playback\n");	
 	} else {		
     snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0x72);
+		es8396->is_recording = false;
 		printk(">>>>>>>>>>>es8396_pcm_shutdown capture\n");			
 	}
 	return 0;
