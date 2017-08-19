@@ -602,8 +602,8 @@ static int adc_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCa);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_3_REG5A, 0x00);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x12);
-		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xd1);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x18);
+		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xd8);
 		snd_soc_write(w->codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x05);
 		snd_soc_write(w->codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x00);
 		
@@ -3388,8 +3388,8 @@ static int es8396_probe(struct snd_soc_codec *codec)
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xCA);	// ALC on, level = -3 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_3_REG5A, 0x00);
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x12);	// ALC max gain = +20.5 db
-		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD1);	// ALC min gain = +13.5 db
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_4_REG5B, 0x18);	// ALC max gain = +29.5 db
+		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_5_REG5C, 0xD8);	// ALC min gain = +24 db
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_6_REG5D, 0x05);	// ALC noise gate enable
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x0);
 		snd_soc_write(tron_codec, ES8396_SYS_MIC_IBIAS_EN_REG75, 0x02);
