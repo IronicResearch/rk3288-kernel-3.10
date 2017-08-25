@@ -1002,8 +1002,8 @@
 					channel = <0>;
 					tsadc-ch = <1>;
 					temp-limit-enable = <1>;
-					target-temp = <80>;
-					min_temp_limit = <48>;
+					target-temp = <85>;
+					min_temp_limit = <312000>;
 
 					normal-temp-limit = <
 					/* delta-temp delta-freq */

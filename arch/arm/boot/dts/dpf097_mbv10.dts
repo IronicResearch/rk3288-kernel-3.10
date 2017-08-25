@@ -991,12 +991,12 @@
 		};
 		rk818_ldo10_reg: regulator@13 {
 			regulator-name= "rk818_ldo10";
-			regulator-min-microvolt = <3300000>;
-			regulator-max-microvolt = <3300000>;
-			regulator-initial-state = <3>;
+			//regulator-min-microvolt = <3300000>;
+			//regulator-max-microvolt = <3300000>;
+			//regulator-initial-state = <3>;
 			regulator-state-mem {
 				regulator-state-enabled;
-				regulator-state-uv = <3300000>;
+				//regulator-state-uv = <3300000>;
 			};
 		};
 	};
