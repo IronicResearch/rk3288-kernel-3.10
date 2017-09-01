@@ -355,8 +355,8 @@
 };
     
 &sdmmc {
-		clock-frequency = <50000000>;
-		clock-freq-min-max = <400000 50000000>;
+		clock-frequency = <150000000>;
+		clock-freq-min-max = <400000 150000000>;
 		supports-highspeed;
 		supports-sd;
 		broken-cd;
@@ -794,9 +794,9 @@
 &clk_ddr_dvfs_table {
 	operating-points = <
 		/* KHz    uV */
-	//	200000 1050000
-	//	300000 1050000
-	//	400000 1100000
+		200000 1050000
+		300000 1050000
+		400000 1100000
 		533000 1150000
 	//	600000 1200000
 		>;
@@ -825,7 +825,7 @@
 		396000
 		528000
 		>;
-	auto-freq=<0>;
+	auto-freq=<1>;
 	status="okay";
 };
 /include/ "rk818.dtsi"
