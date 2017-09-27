@@ -269,7 +269,12 @@ struct es8396_private {
 	int pcm_pop_work_retry;
 
 	bool is_recording;
+	bool is_recording_eq;
+	bool is_playback_eq;
 };
+
+static bool load_playback_eq(struct es8396_private*);
+static bool load_recording_eq(struct es8396_private*);
 
 static bool es8396_valid_micbias(u8 micbias)
 {
@@ -764,7 +769,8 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		printk("Enter into %s  %d, event = SND_SOC_DAPM_PRE_PMU\n",
 			 __func__, __LINE__);	  
-		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x00);
+		//snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x00);
+		load_recording_eq(es8396);
 		snd_soc_write(tron_codec, ES8396_ADC_ANALOG_CTRL_REG5E, 0x3c);
 		snd_soc_write(tron_codec, ES8396_SDP1_OUT_FMT_REG20, 0x40);
 		/* force adc stm to normal */
@@ -819,6 +825,7 @@ static int music_rec_event(struct snd_soc_dapm_widget *w,
 static int music_play_event(struct snd_soc_dapm_widget *w,
 			    struct snd_kcontrol *kcontrol, int event)
 {
+	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
@@ -830,6 +837,8 @@ static int music_play_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, 0x9, 0x04);
 		snd_soc_write(w->codec, 0x69, 0x00);
 		snd_soc_write(w->codec, 0x67, 0x00);
+
+		load_playback_eq(es8396);
 		break;
 	default:
 		case SND_SOC_DAPM_PRE_PMD:
@@ -855,6 +864,8 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 
 	unsigned int regv;
 	int  ret = 0;
+	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
+
 	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
@@ -877,6 +888,8 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		/*
 		snd_soc_write(w->codec, 0x67, 0x0d);
 		snd_soc_write(w->codec, 0x69, 0x04);*/
+
+		#if 0
 		/* clk2 used as EQ clk, OSR = 6xFs for 8k resampling to 48k */
 		//snd_soc_write(w->codec, ES8396_EQ_CLK_OSR_SEL_REG1C, 0x35);
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0x00);
@@ -887,6 +900,9 @@ static int voice_play_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
 		snd_soc_write(w->codec, ES8396_SHARED_DATA_REG1E,
 			      es8396_equalizer_lpf_bt_incall[59]);
+		#endif
+		load_playback_eq(es8396);
+
 		#if 0
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
@@ -945,6 +961,7 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 	unsigned int index;
 	unsigned int regv;
 	int  ret = 0;
+	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(tron_codec);
 	printk("Enter into %s  %d\n", __func__, __LINE__);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -965,6 +982,8 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, 0x1C, 0x22);
 		/*snd_soc_write(w->codec, 0x67, 0x0d);
 		snd_soc_write(w->codec, 0x69, 0x04);*/
+
+		#if 0
 		/* clk2 used as EQ clk, OSR = 6xFs for 8k resampling to 48k */
 		//snd_soc_write(w->codec, ES8396_EQ_CLK_OSR_SEL_REG1C, 0x35);
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0x00);
@@ -976,7 +995,10 @@ static int voice_rec_event(struct snd_soc_dapm_widget *w,
 		snd_soc_write(w->codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
 		snd_soc_write(w->codec, ES8396_SHARED_DATA_REG1E,
 			      es8396_equalizer_lpf_bt_incall[59]);
-	#if 0
+		#endif
+		load_recording_eq(es8396);
+
+		#if 0
 				/* set adc alc */
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_1_REG58, 0xC6);
 		snd_soc_write(tron_codec, ES8396_ADC_ALC_CTRL_2_REG59, 0x12);
@@ -2946,13 +2968,77 @@ static int es8396_set_tristate(struct snd_soc_dai *dai, int tristate)
 	}
 }
 
+static bool load_playback_eq(struct es8396_private* es8396)
+{
+	unsigned int index;
+
+	// recording EQ pre-empts playback EQ
+	if (es8396->is_recording)
+		return false;
+
+	// playback EQ cached?
+	if (es8396->is_playback_eq)
+		return true;
+
+	// load playback EQ
+	snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x00);
+#if 2
+	for (index = 0; index < 40; index++) {
+		snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+			      es8396_equalizer_for_zed2[index]);
+	}
+#else
+	for (index = 0; index < 20; index++) {
+		snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+			      es8396_equalizer_for_zed1[index]);
+	}
+#endif
+	snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x00);
+	snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x40);
+
+	es8396->is_playback_eq = true;
+	es8396->is_recording_eq = false;
+
+	return true;
+}
+
+static bool load_recording_eq(struct es8396_private* es8396)
+{
+	unsigned int index;
+
+	// recording EQ cached?
+	if (es8396->is_recording_eq)
+		return true;
+
+	// load recording EQ
+	snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x33);
+	snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x00);
+	for (index = 0; index < 59; index++) {
+		snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+			      es8396_equalizer_for_zed[index]);
+	}
+	snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
+	snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+		      es8396_equalizer_for_zed[59]);
+	snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x3c);
+	for (index = 60; index < 68; index++) {
+		snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
+			      es8396_equalizer_for_zed[index]);
+	}
+	snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x04);
+
+	es8396->is_recording_eq = true;
+	es8396->is_playback_eq = false;
+
+	return true;
+}
+
 static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 			      struct snd_soc_dai *dai)
 {
 	bool playback = (substream->stream == SNDRV_PCM_STREAM_PLAYBACK);
 	int ret;
 	int regv;
-  unsigned int index;
 	struct snd_soc_codec *codec = dai->codec;
 	struct es8396_private *es8396 = snd_soc_codec_get_drvdata(codec);
 	printk(">>>>>>>>es8396_pcm_startup\n");
@@ -2961,22 +3047,7 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	if (playback) {
 		printk(">>>>>>>>>>>es8396_pcm_startup playback\n");
 
-	    if (!es8396->is_recording) {
-		snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x00);
-	#if 2
-		for (index = 0; index < 40; index++) {
-			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
-				      es8396_equalizer_for_zed2[index]);
-		}
-	#else
-		for (index = 0; index < 20; index++) {
-			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
-				      es8396_equalizer_for_zed1[index]);
-		}
-	#endif
-		snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x00);		
-		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x40);
-	    }
+		load_playback_eq(es8396);
 
 	#if 0
 		/* set adc alc */
@@ -3023,22 +3094,10 @@ static int es8396_pcm_startup(struct snd_pcm_substream *substream,
 	#endif
 	} else {
 		snd_soc_write(tron_codec, ES8396_ADC_CLK_DIV_REG09, 0x08);//04 original, 08 for adc double speed	
-    snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
-    snd_soc_write(tron_codec, ES8396_DMIX_SRC_2_REG19, 0x33);
-    snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x00);
-		for (index = 0; index < 59; index++) {
-			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
-				      es8396_equalizer_for_zed[index]);
-		}
-		snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0xbb);
-		snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
-			      es8396_equalizer_for_zed[59]);
-		snd_soc_write(tron_codec, ES8396_SHARED_ADDR_REG1D, 0x3c);
-		for (index = 60; index < 68; index++) {
-			snd_soc_write(tron_codec, ES8396_SHARED_DATA_REG1E,
-				      es8396_equalizer_for_zed[index]);		
-		}
-		snd_soc_write(tron_codec, ES8396_DAC_SRC_SDP1O_SRC_REG1A, 0x04);
+		snd_soc_write(tron_codec, ES8396_ALRCK_GPIO_SEL_REG15, 0xfa);
+
+		load_recording_eq(es8396);
+
 		es8396->is_recording = true;
 		printk(">>>>>>>>>>>es8396_pcm_startup capture\n");			
 	}
