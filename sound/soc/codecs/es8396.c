@@ -398,14 +398,14 @@ static void pcm_pop_work_events(struct work_struct *work)
 	snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x86);
 
 	if (es8396->output_device_selected == 0) {	/* speaker */
-		regv = snd_soc_read(tron_codec, ES8396_SPK_EN_VOL_REG3B);
-		regv |= 0x88;
-		/* set enspk_l,enspk_r */
-		snd_soc_write(tron_codec, ES8396_SPK_EN_VOL_REG3B, regv);
 		//snd_soc_write(tron_codec, ES8396_DAC_OFFSET_CALI_REG6F, 0x16);
 		/* dac csm startup, dac digital still on */
 		snd_soc_update_bits(tron_codec, ES8396_DAC_CSM_REG66,
 				    0x03, 0x02);
+		regv = snd_soc_read(tron_codec, ES8396_SPK_EN_VOL_REG3B);
+		regv |= 0x88;
+		/* set enspk_l,enspk_r */
+		snd_soc_write(tron_codec, ES8396_SPK_EN_VOL_REG3B, regv);
 	} else {	/* headphone */
 		/* dac csm startup, dac digital still on */
 		snd_soc_update_bits(tron_codec, ES8396_DAC_CSM_REG66,
@@ -510,8 +510,8 @@ static int classd_event(struct snd_soc_dapm_widget *w,
 		/* stop class d clock */
 		snd_soc_write(w->codec, ES8396_CLK_CTRL_REG08, regv1);
 		/* dac csm startup, dac digital still on */
-		/* snd_soc_update_bits(w->codec, ES8396_DAC_CSM_REG66,
-				       0x01, 0x01); */
+		snd_soc_update_bits(w->codec, ES8396_DAC_CSM_REG66,
+				       0x01, 0x01);
 		regv1 = snd_soc_read(w->codec, ES8396_SPK_EN_VOL_REG3B);
 		regv1 &= 0x77;
 		/* clear enspk_l,enspk_r */
