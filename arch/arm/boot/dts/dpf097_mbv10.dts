@@ -365,7 +365,7 @@
 		ignore-pm-notify;
         	keep-power-in-suspend;
 	
-        //	vmmc-supply = <&ldo1_reg>;
+		vmmc-supply = <&rk818_ldo9_reg>;
 		status = "okay";
 };
 		
@@ -981,7 +981,7 @@
 		};
 		rk818_ldo9_reg: regulator@12 {
 			regulator-name= "vcc_sd";
-			regulator-min-microvolt = <3300000>;
+			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
@@ -991,7 +991,7 @@
 		};
 		rk818_ldo10_reg: regulator@13 {
 			regulator-name= "rk818_ldo10";
-			//regulator-min-microvolt = <3300000>;
+			//regulator-min-microvolt = <1800000>;
 			//regulator-max-microvolt = <3300000>;
 			//regulator-initial-state = <3>;
 			regulator-state-mem {

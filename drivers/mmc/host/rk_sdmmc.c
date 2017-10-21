@@ -305,7 +305,7 @@ static void dw_mci_start_command(struct dw_mci *host,
 		mci_writel(host, CMDARG, 0);
 		dw_mci_disable_low_power(slot);
 		
-		MMC_DBG_INFO_FUNC(host->mmc,"Line%d..%s before start cmd=11,[%s]",
+		MMC_DBG_SW_VOL_FUNC(host->mmc,"Line%d..%s before start cmd=11,[%s]",
 			__LINE__, __FUNCTION__,mmc_hostname(host->mmc));
 
 		cmd_flags |= SDMMC_CMD_VOLT_SWITCH;
@@ -953,8 +953,8 @@ static void mci_send_cmd(struct dw_mci_slot *slot, u32 cmd, u32 arg)
 
 		if(false == ret)
 			MMC_DBG_ERR_FUNC(host->mmc,
-				"mci_send_cmd: wait for unbusy timeout! [%s]",
-				mmc_hostname(host->mmc));
+				"mci_send_cmd: wait for unbusy timeout! STATUS=0x%x [%s]",
+				cmd_status, mmc_hostname(host->mmc));
 	}
 #endif
  
@@ -1190,9 +1190,13 @@ int dw_mci_card_busy(struct mmc_host *mmc)
 	struct dw_mci_slot *slot = mmc_priv(mmc);
 	struct dw_mci *host = slot->host;
 
+#if 0
+	host->svi_flags = mci_readl(host, STATUS);
+	host->svi_flags = (host->svi_flags & SDMMC_STAUTS_DATA_BUSY);
+#endif
+
         MMC_DBG_INFO_FUNC(host->mmc, "dw_mci_card_busy: svi_flags = %d [%s]", \
                                 host->svi_flags, mmc_hostname(host->mmc));	
-    
         /* svi toggle*/
         if(host->svi_flags == 0){
                 /*first svi*/
@@ -1203,8 +1207,6 @@ int dw_mci_card_busy(struct mmc_host *mmc)
                 host->svi_flags = 0;
                 return host->svi_flags;   
     	}
-    	
-
 }
 #endif
 static void __dw_mci_start_request(struct dw_mci *host,
@@ -3587,14 +3589,14 @@ static int dw_mci_init_slot(struct dw_mci *host, unsigned int id)
 
 	host->vmmc = NULL;
 	if (mmc->restrict_caps & RESTRICT_CARD_TYPE_SD) {
-		host->vmmc = devm_regulator_get(mmc_dev(mmc), "vmmc");
+		host->vmmc = devm_regulator_get(mmc_dev(mmc), "vmmc"); // FIXME: DTS
 		if (!IS_ERR(host->vmmc)) {
 			ret = regulator_enable(host->vmmc);
 			if (ret) {
 				dev_err(host->dev,
 					"failed to enable regulator: %d\n", ret);
-				host->vmmc = NULL;
-				goto err_setup_bus;
+				//host->vmmc = NULL;
+				//goto err_setup_bus;
 			}
 		} else {
 			host->vmmc = NULL;
