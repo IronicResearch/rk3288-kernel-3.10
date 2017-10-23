@@ -239,6 +239,14 @@
         chosen {
                 bootargs = "vmalloc=512M";
         };
+
+	board_id {
+		compatible = "rockchip,rk818";
+		bid0 = <&gpio3 GPIO_D2 GPIO_ACTIVE_HIGH>;
+		bid1 = <&gpio3 GPIO_D3 GPIO_ACTIVE_HIGH>;
+		bid2 = <&gpio3 GPIO_D4 GPIO_ACTIVE_HIGH>;
+		bid3 = <&gpio3 GPIO_D5 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &gmac {
@@ -295,6 +303,25 @@
 				rockchip,pull = <VALUE_PULL_UP>;
 			};
 		};
+
+	gpio3_gpio {
+			gpio3_d2: gpio3-d2 {
+				rockchip,pins = <GPIO3_D2>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			gpio3_d3: gpio3-d3 {
+				rockchip,pins = <GPIO3_D3>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			gpio3_d4: gpio3-d4 {
+				rockchip,pins = <GPIO3_D4>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+			gpio2_d5: gpio3-d5 {
+				rockchip,pins = <GPIO3_D5>;
+				rockchip,pull = <VALUE_PULL_UP>;
+			};
+		};
 };
 
 &nandc0 {
@@ -328,8 +355,8 @@
 };
     
 &sdmmc {
-		clock-frequency = <50000000>;
-		clock-freq-min-max = <400000 50000000>;
+		clock-frequency = <150000000>;
+		clock-freq-min-max = <400000 150000000>;
 		supports-highspeed;
 		supports-sd;
 		broken-cd;
@@ -338,7 +365,7 @@
 		ignore-pm-notify;
         	keep-power-in-suspend;
 	
-        //	vmmc-supply = <&ldo1_reg>;
+		vmmc-supply = <&rk818_ldo9_reg>;
 		status = "okay";
 };
 		
@@ -767,9 +794,9 @@
 &clk_ddr_dvfs_table {
 	operating-points = <
 		/* KHz    uV */
-	//	200000 1050000
-	//	300000 1050000
-	//	400000 1100000
+		200000 1050000
+		300000 1050000
+		400000 1100000
 		533000 1150000
 	//	600000 1200000
 		>;
@@ -798,7 +825,7 @@
 		396000
 		528000
 		>;
-	auto-freq=<0>;
+	auto-freq=<1>;
 	status="okay";
 };
 /include/ "rk818.dtsi"
@@ -866,12 +893,12 @@
 
 		rk818_ldo1_reg: regulator@4 {
 			regulator-name= "rk818_ldo1";
-			regulator-min-microvolt = <3300000>;
-			regulator-max-microvolt = <3300000>;
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
 				regulator-state-enabled;
-				regulator-state-uv = <3300000>;
+				regulator-state-uv = <1800000>;
 			};
 		};
 
@@ -900,12 +927,12 @@
 
 		rk818_ldo4_reg:regulator@7 {
 			regulator-name= "rk818_ldo4";
-			regulator-min-microvolt = <1800000>;
-			regulator-max-microvolt = <1800000>;
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
 				regulator-state-enabled;
-				regulator-state-uv = <1800000>;
+				regulator-state-uv = <3300000>;
 			};
 		};
 
@@ -944,17 +971,17 @@
 
 		rk818_ldo8_reg: regulator@11 {
 			regulator-name= "rk818_ldo8";
-			regulator-min-microvolt = <3300000>;
-			regulator-max-microvolt = <3300000>;
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
 				regulator-state-enabled;
-				regulator-state-uv = <3300000>;
+				regulator-state-uv = <1800000>;
 			};
 		};
 		rk818_ldo9_reg: regulator@12 {
 			regulator-name= "vcc_sd";
-			regulator-min-microvolt = <3300000>;
+			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-initial-state = <3>;
 			regulator-state-mem {
@@ -964,17 +991,27 @@
 		};
 		rk818_ldo10_reg: regulator@13 {
 			regulator-name= "rk818_ldo10";
-			regulator-min-microvolt = <3300000>;
-			regulator-max-microvolt = <3300000>;
-			regulator-initial-state = <3>;
+			//regulator-min-microvolt = <1800000>;
+			//regulator-max-microvolt = <3300000>;
+			//regulator-initial-state = <3>;
 			regulator-state-mem {
 				regulator-state-enabled;
-				regulator-state-uv = <3300000>;
+				//regulator-state-uv = <3300000>;
 			};
 		};
 	};
 	battery {
 		ocv_table = <3400 3654 3686 3710 3733 3748 3765 3778 3788 3799 3812 3831 3853 3896 3929 3959 3986 4021 4070 4108 4166>;
+		ntc_table = <56830 54110 51530 49100 46800 44610 42550 40590
+38730 36970 35300 33710 32210 30780 29420 28130
+26910 25750 24640 23590 22580 21630 20720 19860
+19030 18250 17500 16790 16110 15460 14840 14250
+13690 13150 12640 12150 11680 11230 10800 10390
+10000 9620 9270 8920 8590 8280 7980 7690 7410
+7150 6890 6650 6410 6190 5970 5770 5570 5380
+5190 5020 4850 4680 4530 4380 4230 4100 3960
+3830 3710 3590 3480>;
+ntc_degree_from = <1 15>;
 		design_capacity = <4634>;
 		design_qmax = <5097>;
 		bat_res = <140>;

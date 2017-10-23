@@ -168,6 +168,7 @@ static int sensor_init(struct i2c_client *client)
 
 	for (i = 0; i < 5; i++) {
         /* shut down */
+                status = cm3218_write(client, 0x03, 0x00);
 		status = cm3218_write(client, CM3218_REG_ADDR_CMD, CM3218_CMD_ALS_SD);
 		if (status >= 0)
 			break;

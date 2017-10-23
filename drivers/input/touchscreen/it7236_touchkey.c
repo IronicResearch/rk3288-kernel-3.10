@@ -58,6 +58,18 @@ static char it7236_fw_name[256] = "IT7236_FW";
 // Put the IT7236 firmware file at /etc/firmware/ and the file name is IT7236_FW
 
 
+// run-time conditional parameter for enabling debug output
+static int dbg_enable = 0;
+module_param_named(dbg_level, dbg_enable, int, 0644);
+
+#define PRINTK(args...) \
+	do { \
+		if (dbg_enable) { \
+			pr_info(args); \
+		} \
+	} while (0)
+
+
 
 static int get_config_ver(void);
 
@@ -765,11 +777,11 @@ static void Read_Point(struct IT7236_tk_data *ts)
 				
 				input_report_abs(input_dev, ABS_X, touch_value); 
 				input_sync(input_dev);
-			//	printk("it7236 press %d\n",touch_value);
+				PRINTK("it7236 press %d\n",touch_value);
 			}else if(touch_value1 != (int)pucSliderBuffer[1]){//移动中
 				input_report_abs(input_dev, ABS_X, touch_value); 
 				input_sync(input_dev);
-			//	printk("it7236 press move%d\n",touch_value);
+				PRINTK("it7236 press move %d\n",touch_value);
 			}
 				
 			it7236_slider_flag = 1;
@@ -783,7 +795,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 	//	input_sync(input_dev);
 		input_report_abs(input_dev, ABS_Y, touch_value);//避免逻辑问题 释放时报另一个轴
 		input_sync(input_dev);
-		printk("it7236 release\n");
+		PRINTK("it7236 release\n");
 		it7236_flag = 2;
 		it7236_slider_flag = 2;//离开滑条
 	}
@@ -798,7 +810,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         //input_mt_sync(input_dev);
         input_sync(input_dev);
-    //    printk("left\n\n");
+        PRINTK("left\n\n");
         proximity_flag = 301;
 		it7236_promixy_flag = 1;
       //  printk("Near proximity===================proximity_flag=%d\n\n\n\n",proximity_flag);
@@ -808,7 +820,7 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 301);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-     //   printk("right\n\n");
+        PRINTK("right\n\n");
         proximity_flag = 302;
 		it7236_promixy_flag = 1;
     }else if(proximity_flag != 303 && ((int)pucSliderBuffer[2] ==165 &&(int)pucSliderBuffer[3]==90) ){
@@ -817,14 +829,14 @@ static void Read_Point(struct IT7236_tk_data *ts)
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 301);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-    //    printk("mid\n\n");
+        PRINTK("mid\n\n");
         proximity_flag = 303;
 		it7236_promixy_flag = 1;
     }else if(proximity_flag != 300 && proximity_flag != 1 && ((int)pucSliderBuffer[2] == 0 && (int)pucSliderBuffer[3]==0)){
         input_report_abs(input_dev, ABS_MT_POSITION_Y, 300);
 		//input_report_abs(input_dev, ABS_MT_POSITION_Y, touch_value);
         input_sync(input_dev);
-        printk("realse\n\n");
+        PRINTK("realse\n\n");
         proximity_flag = 300;
 		it7236_promixy_flag = 2;//离开距感
         //printk("leave proximity=================proximity_flag=%d\n\n\n\n",proximity_flag);

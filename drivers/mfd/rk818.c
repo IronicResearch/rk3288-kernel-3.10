@@ -74,6 +74,8 @@ static u8 dcdc_sleep_volt_save[4];
 static u8 ldo_sleep_volt_save[9];
 static u8 sleep_state_save[2];
 
+static int bid[4];
+
 const static int buck_set_vol_base_addr[] = {
 	RK818_BUCK1_ON_REG,
 	RK818_BUCK2_ON_REG,
@@ -1144,7 +1146,17 @@ static struct rk818_board *rk818_parse_dt(struct rk818 *rk818)
 {
 	struct rk818_board *pdata;
 	struct device_node *regs,*rk818_pmic_np;
+	struct device_node *board_id;
 	int i, count;
+
+	board_id = of_find_node_by_name(NULL, "board_id");
+	if (board_id) {
+		bid[0] = gpio_get_value(of_get_named_gpio(board_id, "bid0", 0));
+		bid[1] = gpio_get_value(of_get_named_gpio(board_id, "bid1", 0));
+		bid[2] = gpio_get_value(of_get_named_gpio(board_id, "bid2", 0));
+		bid[3] = gpio_get_value(of_get_named_gpio(board_id, "bid3", 0));
+		printk("%s: board id = %d%d%d%d\n", __func__, bid[0], bid[1], bid[2], bid[3]);
+	}
 
 	rk818_pmic_np = of_node_get(rk818->dev->of_node);
 	if (!rk818_pmic_np) {
@@ -1167,8 +1179,27 @@ static struct rk818_board *rk818_parse_dt(struct rk818 *rk818)
 		return NULL;
 
 	for (i = 0; i < count; i++) {
+		//struct regulation_constraints *constraints = &(*init_data)->constraints;
+		struct regulator_init_data *prd;
+		struct regulation_constraints *prc;
+
 		if (!rk818_reg_matches[i].init_data || !rk818_reg_matches[i].of_node)
 			continue;
+
+		prd = rk818_reg_matches[i].init_data;
+		prc = &prd->constraints;
+		printk("%s: %d: %s: %d, %d\n", __func__, i, prc->name, prc->min_uV, prc->max_uV);
+
+		// swizzle voltage settings for LDO1, LDO4, LDO8 on original board ID
+		if (!(bid[0] == 0 && bid[1] == 0 && bid[2] == 0 && bid[3] == 0)) {
+			if (i == 4 || i == 7 || i == 11) {
+				if (i == 4 || i == 11)
+					prc->min_uV = prc->max_uV = prc->state_mem.uV = 3300000;
+				if (i == 7)
+					prc->min_uV = prc->max_uV = prc->state_mem.uV = 1800000;
+				printk("%s: %d: %s: %d, %d\n", __func__, i, prc->name, prc->min_uV, prc->max_uV);
+			}
+		}
 
 		pdata->rk818_init_data[i] = rk818_reg_matches[i].init_data;
 		pdata->of_node[i] = rk818_reg_matches[i].of_node;
@@ -1360,7 +1391,7 @@ static int rk818_pre_init(struct rk818 *rk818)
 	ret = rk818_set_bits(rk818, 0x52,(0x1<<0),(0x1<<0)); //enable HDMI 5V
 
 	// enable poweroff + restart on long power button press
-	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x40);
+	ret = rk818_reg_write(rk818, RK818_DEVCTRL_REG, 0x70);
 
 	// log previous poweroff state
 	val = rk818_reg_read(rk818, 0xAF); // RK818_OFF_SOURCE_REG

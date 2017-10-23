@@ -131,6 +131,7 @@
 #define OTG_ON			((0x3 << 5) | (0x3 << 1))
 #define BOOST_OTG_OFF		((0x3 << 5) | (0x0 << 1))
 #define CHRG_EN			(1 << 7)
+#define CHRG_DIS			(0 << 7)
 
 #define FB_TEMP_SHIFT		2
 #define CHRG_VOL_SEL_SHIFT	4
