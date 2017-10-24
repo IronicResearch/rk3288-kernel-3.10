@@ -1190,13 +1190,15 @@ int dw_mci_card_busy(struct mmc_host *mmc)
 	struct dw_mci_slot *slot = mmc_priv(mmc);
 	struct dw_mci *host = slot->host;
 
-#if 0
+#ifndef SDMMC_WAIT_FOR_UNBUSY
 	host->svi_flags = mci_readl(host, STATUS);
 	host->svi_flags = (host->svi_flags & SDMMC_STAUTS_DATA_BUSY);
 #endif
 
-        MMC_DBG_INFO_FUNC(host->mmc, "dw_mci_card_busy: svi_flags = %d [%s]", \
+        MMC_DBG_SW_VOL_FUNC(host->mmc, "dw_mci_card_busy: svi_flags = %d [%s]", \
                                 host->svi_flags, mmc_hostname(host->mmc));	
+
+#ifdef SDMMC_WAIT_FOR_UNBUSY
         /* svi toggle*/
         if(host->svi_flags == 0){
                 /*first svi*/
@@ -1207,6 +1209,9 @@ int dw_mci_card_busy(struct mmc_host *mmc)
                 host->svi_flags = 0;
                 return host->svi_flags;   
     	}
+#endif
+
+	return host->svi_flags;
 }
 #endif
 static void __dw_mci_start_request(struct dw_mci *host,
