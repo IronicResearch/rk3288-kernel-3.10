@@ -32,7 +32,7 @@
 #define IT7236_USE_IRQ    1
 
 #if IT7236_FW_AUTO_UPGRADE
-#include "IT7236_FW.h"
+#include "FF000007-Proximity-Slider-V0AB.c"
 #endif
 
 #include "it7236_touchkey.h"
