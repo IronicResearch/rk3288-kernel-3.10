@@ -42,7 +42,7 @@
 #define EV_ENCALL                       KEY_F4
 #define EV_MENU                         KEY_F1
 
-#if 0
+#if 1
 #define key_dbg(bdata, format, arg...)		\
 	dev_info(&bdata->input->dev, format, ##arg)
 #else
@@ -129,9 +129,9 @@ static void keys_timer(unsigned long _data)
 	if (button->state != state) {
 		button->state = state;
 		input_event(input, EV_KEY, button->code, button->state);
-		key_dbg(pdata, "%skey[%s]: report event[%d] state[%d]\n",
+		key_dbg(pdata, "%skey[%s]: report event[%d] state[%d] raw[%d]\n",
 			button->type == TYPE_ADC ? "adc" : "gpio",
-			button->desc, button->code, button->state);
+			button->desc, button->code, button->state, pdata->result);
 		input_event(input, EV_KEY, button->code, button->state);
 		input_sync(input);
 	}
@@ -164,7 +164,7 @@ static irqreturn_t keys_isr(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-/*
+/**/
 static ssize_t adc_value_show(struct device *dev, struct device_attribute *attr,
 			      char *buf)
 {
@@ -173,7 +173,7 @@ static ssize_t adc_value_show(struct device *dev, struct device_attribute *attr,
 	return sprintf(buf, "adc_value: %d\n", ddata->result);
 }
 static DEVICE_ATTR(get_adc_value, S_IRUGO | S_IWUSR, adc_value_show, NULL);
-*/
+/**/
 
 static const struct of_device_id rk_key_match[] = {
 	{ .compatible = "rockchip,key", .data = NULL},
@@ -204,11 +204,14 @@ static void adc_key_poll(struct work_struct *work)
 	ddata = container_of(work, struct rk_keys_drvdata, adc_poll_work.work);
 	if (!ddata->in_suspend) {
 		result = rk_key_adc_iio_read(ddata);
+		pr_info("adc read: %d\n", result);
 		if (result > INVALID_ADVALUE && result < EMPTY_ADVALUE)
 			ddata->result = result;
 		for (i = 0; i < ddata->nbuttons; i++) {
 			struct rk_keys_button *button = &ddata->button[i];
 
+			if (result <= INVALID_ADVALUE)
+				break;
 			if (!button->adc_value)
 				continue;
 			if (result < button->adc_value + DRIFT_ADVALUE &&
