@@ -37,7 +37,7 @@
 #include <linux/of_platform.h>
 
 #define EMPTY_ADVALUE			950
-#define DRIFT_ADVALUE			10
+#define DRIFT_ADVALUE			70
 #define INVALID_ADVALUE			-1
 #define EV_ENCALL                       KEY_F4
 #define EV_MENU                         KEY_F1
@@ -195,6 +195,22 @@ static int rk_key_adc_iio_read(struct rk_keys_drvdata *data)
 	return val;
 }
 
+static int rk_key_adc_read_median3(struct rk_keys_drvdata *data)
+{
+	int x, y, z;
+
+	x = rk_key_adc_iio_read(data);
+	y = rk_key_adc_iio_read(data);
+	z = rk_key_adc_iio_read(data);
+
+	pr_info("adc read: %d, %d, %d ... ", x, y, z);
+
+	if (x < y)
+		return (y < z) ? y : z;
+	else
+		return (x < z) ? x : z;
+}
+
 static void adc_key_poll(struct work_struct *work)
 {
 	struct rk_keys_drvdata *ddata;
@@ -202,7 +218,7 @@ static void adc_key_poll(struct work_struct *work)
 
 	ddata = container_of(work, struct rk_keys_drvdata, adc_poll_work.work);
 	if (!ddata->in_suspend) {
-		result = rk_key_adc_iio_read(ddata);
+		result = rk_key_adc_read_median3(ddata);
 		pr_info("adc read: %d\n", result);
 		if (result > INVALID_ADVALUE && result < EMPTY_ADVALUE)
 			ddata->result = result;
