@@ -37,7 +37,7 @@
 #include <linux/of_platform.h>
 
 #define EMPTY_ADVALUE			950
-#define DRIFT_ADVALUE			70
+#define DRIFT_ADVALUE			10
 #define INVALID_ADVALUE			-1
 #define EV_ENCALL                       KEY_F4
 #define EV_MENU                         KEY_F1
@@ -128,7 +128,6 @@ static void keys_timer(unsigned long _data)
 
 	if (button->state != state) {
 		button->state = state;
-		input_event(input, EV_KEY, button->code, button->state);
 		key_dbg(pdata, "%skey[%s]: report event[%d] state[%d] raw[%d]\n",
 			button->type == TYPE_ADC ? "adc" : "gpio",
 			button->desc, button->code, button->state, pdata->result);
