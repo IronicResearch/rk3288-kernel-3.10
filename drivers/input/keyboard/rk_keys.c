@@ -206,9 +206,9 @@ static int rk_key_adc_read_median3(struct rk_keys_drvdata *data)
 	pr_info("adc read: %d, %d, %d ... ", x, y, z);
 
 	if (x < y)
-		return (y < z) ? y : z;
+		return (y < z) ? y : (x < z) ? z : x;
 	else
-		return (x < z) ? x : z;
+		return (x < z) ? x : (y < z) ? z : y;
 }
 
 static void adc_key_poll(struct work_struct *work)
