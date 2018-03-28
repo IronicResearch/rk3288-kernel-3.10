@@ -67,6 +67,7 @@ struct rk_keys_button {
 	int gpio;		/* gpio only */
 	int adc_value;		/* adc only */
 	int adc_state;		/* adc only */
+	int adc_retry;		/* adc only */
 	int active_low;		/* gpio only */
 	int wakeup;		/* gpio only */
 	struct timer_list timer;
@@ -215,6 +216,7 @@ static void adc_key_poll(struct work_struct *work)
 {
 	struct rk_keys_drvdata *ddata;
 	int i, result = -1;
+	unsigned long resample = ADC_SAMPLE_JIFFIES;
 
 	ddata = container_of(work, struct rk_keys_drvdata, adc_poll_work.work);
 	if (!ddata->in_suspend) {
@@ -234,13 +236,20 @@ static void adc_key_poll(struct work_struct *work)
 				button->adc_state = 1;
 			else
 				button->adc_state = 0;
-			if (button->state != button->adc_state)
-				mod_timer(&button->timer,
-					  jiffies + DEBOUNCE_JIFFIES);
+			if (button->state != button->adc_state) {
+				if (button->adc_retry) {
+					mod_timer(&button->timer, jiffies + DEBOUNCE_JIFFIES);
+					button->adc_retry = 0;
+				}
+				else {
+					button->adc_retry++;
+					resample = DEBOUNCE_JIFFIES;
+				}
+			}
 		}
 	}
 
-	schedule_delayed_work(&ddata->adc_poll_work, ADC_SAMPLE_JIFFIES);
+	schedule_delayed_work(&ddata->adc_poll_work, resample);
 }
 
 static int rk_key_type_get(struct device_node *node,
