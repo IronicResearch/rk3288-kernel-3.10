@@ -113,8 +113,6 @@ void rk_send_wakeup_key(void)
 }
 EXPORT_SYMBOL(rk_send_wakeup_key);
 
-static int rk_key_adc_read_median3(struct rk_keys_drvdata *data);
-
 static void keys_timer(unsigned long _data)
 {
 	struct rk_keys_button *button = (struct rk_keys_button *)_data;
@@ -125,18 +123,8 @@ static void keys_timer(unsigned long _data)
 	if (button->type == TYPE_GPIO)
 		state = !!((gpio_get_value(button->gpio) ? 1 : 0) ^
 			   button->active_low);
-	else {
-		int result = rk_key_adc_read_median3(pdata);
-		if (result > INVALID_ADVALUE) {
-			pdata->result = result;
-			if (result < button->adc_value + DRIFT_ADVALUE &&
-			    result > button->adc_value - DRIFT_ADVALUE)
-				button->adc_state = 1;
-			else
-				button->adc_state = 0;
-		}
+	else
 		state = !!button->adc_state;
-	}
 
 	if (button->state != state) {
 		button->state = state;
