@@ -42,7 +42,7 @@
 #define EV_ENCALL                       KEY_F4
 #define EV_MENU                         KEY_F1
 
-#if 1
+#if 0
 #define key_dbg(bdata, format, arg...)		\
 	dev_info(&bdata->input->dev, format, ##arg)
 #else
@@ -164,7 +164,7 @@ static irqreturn_t keys_isr(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-/**/
+/*
 static ssize_t adc_value_show(struct device *dev, struct device_attribute *attr,
 			      char *buf)
 {
@@ -173,7 +173,7 @@ static ssize_t adc_value_show(struct device *dev, struct device_attribute *attr,
 	return sprintf(buf, "adc_value: %d\n", ddata->result);
 }
 static DEVICE_ATTR(get_adc_value, S_IRUGO | S_IWUSR, adc_value_show, NULL);
-/**/
+*/
 
 static const struct of_device_id rk_key_match[] = {
 	{ .compatible = "rockchip,key", .data = NULL},
@@ -204,8 +204,6 @@ static int rk_key_adc_read_median3(struct rk_keys_drvdata *data)
 	y = rk_key_adc_iio_read(data);
 	z = rk_key_adc_iio_read(data);
 
-	pr_info("adc read: %d, %d, %d ... ", x, y, z);
-
 	if (x < y)
 		return (y < z) ? y : (x < z) ? z : x;
 	else
@@ -221,7 +219,6 @@ static void adc_key_poll(struct work_struct *work)
 	ddata = container_of(work, struct rk_keys_drvdata, adc_poll_work.work);
 	if (!ddata->in_suspend) {
 		result = rk_key_adc_read_median3(ddata);
-		pr_info("adc read: %d\n", result);
 		if (result > INVALID_ADVALUE && result < EMPTY_ADVALUE)
 			ddata->result = result;
 		for (i = 0; i < ddata->nbuttons; i++) {
