@@ -37,12 +37,12 @@
 #include <linux/of_platform.h>
 
 #define EMPTY_ADVALUE			950
-#define DRIFT_ADVALUE			70
+#define DRIFT_ADVALUE			10
 #define INVALID_ADVALUE			-1
 #define EV_ENCALL                       KEY_F4
 #define EV_MENU                         KEY_F1
 
-#if 0
+#if 1
 #define key_dbg(bdata, format, arg...)		\
 	dev_info(&bdata->input->dev, format, ##arg)
 #else
