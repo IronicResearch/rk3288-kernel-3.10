@@ -136,7 +136,7 @@ static int cm3218_read_lux(struct i2c_client *client, int *lux)
 
 	*lux  = lux_data * LENSFACTOR;
 	*lux /= 1000;
-    printk("---------------------------lux = %d\n\n\n",*lux);
+//    printk("---------------------------lux = %d\n\n\n",*lux);
 
 	return 0;
 }
